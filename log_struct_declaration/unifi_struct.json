@@ -1,0 +1,17 @@
+[
+    {
+        "name": "TimeGenerated",
+        "type": "datetime",
+        "desription": "The Event time"
+    },
+    {
+        "name": "Computer",
+        "type": "string",
+        "desription": "Host Device That sent the log"
+    },
+    {
+        "name": "Message",
+        "type": "string",
+        "desription": "Raw data of the log"
+    }
+]

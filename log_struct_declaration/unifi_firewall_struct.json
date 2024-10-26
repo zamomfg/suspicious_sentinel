@@ -1,0 +1,107 @@
+[
+    {
+        "name": "TimeGenerated",
+        "type": "datetime",
+        "description": "enter_description"
+    },
+    {
+        "name": "Rule",
+        "type": "string",
+        "description": "enter_description"
+    },
+    {
+        "name": "SourceIP",
+        "type": "string",
+        "description": "enter_description"
+    },
+    {
+        "name": "DestIP",
+        "type": "string",
+        "description": "enter_description"
+    },
+    {
+        "name": "SourcePort",
+        "type": "int",
+        "description": "enter_description"
+    },
+    {
+        "name": "DestPort",
+        "type": "int",
+        "description": "enter_description"
+    },
+    {
+        "name": "Protocol",
+        "type": "string",
+        "description": "enter_description"
+    },
+    {
+        "name": "Length",
+        "type": "int",
+        "description": "enter_description"
+    },
+    {
+        "name": "TTL",
+        "type": "int",
+        "description": "enter_description"
+    },
+    {
+        "name": "Flags",
+        "type": "string",
+        "description": "enter_description"
+    },
+    {
+        "name": "MAC",
+        "type": "string",
+        "description": "enter_description"
+    },
+    {
+        "name": "ID",
+        "type": "int",
+        "description": "enter_description"
+    },
+    {
+        "name": "WindowSize",
+        "type": "int",
+        "description": "enter_description"
+    },
+    {
+        "name": "TypeOfService",
+        "type": "string",
+        "description": "enter_description"
+    },
+    {
+        "name": "InterfaceIn",
+        "type": "string",
+        "description": "enter_description"
+    },
+    {
+        "name": "InterfaceOut",
+        "type": "string",
+        "description": "enter_description"
+    },
+    {
+        "name": "Precedence",
+        "type": "string",
+        "description": "enter_description"
+    },
+    {
+        "name": "Urgent",
+        "type": "int",
+        "description": "enter_description"
+    },
+    {
+        "name": "Reserved",
+        "type": "string",
+        "description": "enter_description"
+    },
+    {
+        "name": "Fragment",
+        "type": "string",
+        "description": "enter_description"
+    },
+    {
+        "name": "Message",
+        "type": "string",
+        "description": "enter_description"
+    }
+]

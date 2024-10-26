@@ -1,0 +1,5 @@
+/Backend/
+.terraform
+
+/logger/var.env
+/logger/test.log
