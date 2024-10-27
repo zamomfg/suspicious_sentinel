@@ -46,7 +46,7 @@ UnifiFirewallLogs_CL
 
 ### TODO
 
-- Change to a Sentinel workspace
+- ~~Change to a Sentinel workspace~~
 - Create some KQL queries
 - Fix a Go program for logging and create a linux service for it
 - Fix a pipeline for deployment
