@@ -2,22 +2,29 @@
 resource "azurerm_resource_group" "rg_log" {
     name = "rg-${var.app_name}-${local.location_short}-001"
     location = var.location
+    tags = var.tags
 }
 
 resource "azurerm_log_analytics_workspace" "law" {
     name = "law-${var.app_name}-${local.location_short}-001"
     location = azurerm_resource_group.rg_log.location
     resource_group_name = azurerm_resource_group.rg_log.name
+    tags = var.tags
     
     sku = "PerGB2018"
     retention_in_days = var.law_global_reteion_days
   
 }
 
+resource "azurerm_sentinel_log_analytics_workspace_onboarding" "sentinel" {
+  workspace_id = azurerm_log_analytics_workspace.law.id
+}
+
 resource "azurerm_monitor_data_collection_endpoint" "dce_unifi_logs" {
     name = "dce-unifi-${local.location_short}-001"
     resource_group_name = azurerm_resource_group.rg_log.name
     location = azurerm_resource_group.rg_log.location
+    tags = var.tags
 }
 
 resource "azurerm_monitor_data_collection_rule_association" "dcra_unifi_logs" {
@@ -47,6 +54,7 @@ resource "azurerm_monitor_data_collection_rule" "dcr_unifi_logs" {
     name = "dcr-unifi-${local.location_short}-001"
     location = azurerm_resource_group.rg_log.location
     resource_group_name = azurerm_resource_group.rg_log.name
+    tags = var.tags
 
     data_collection_endpoint_id = azurerm_monitor_data_collection_endpoint.dce_unifi_logs.id
 

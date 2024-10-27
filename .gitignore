@@ -1,5 +1,10 @@
 /Backend/
 .terraform
+terraform.tfstate.*
+.terraform.lock.hcl
 
 /logger/var.env
 /logger/test.log
+/watchlist_data/*
+
+lab.auto.tfvars

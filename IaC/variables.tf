@@ -15,6 +15,10 @@ variable "law_global_reteion_days" {
   type = number
 }
 
+variable "tags" {
+  type = map(string)
+}
+
 locals {
   location_short = lookup(
     {

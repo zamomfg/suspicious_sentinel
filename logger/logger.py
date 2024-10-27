@@ -46,9 +46,9 @@ if __name__ == '__main__':
     parser.add_argument("-s", "--stream", type=str, help="Name of the stream to log to", required=True)
     parser.add_argument("-r", "--regex", type=str, help="Regex of filtering logs before sending to workspace, if there is a match then the logs will be sent")
 
-    args = parser.parse_args()
+    # TODO add flag for the script to check and send the time
 
-    # logging.basicConfig(level=logging.DEBUG)
+    args = parser.parse_args()
 
     # hostname = platform.node()
 
@@ -60,6 +60,8 @@ if __name__ == '__main__':
     for line in loglines:
         
         if re.match(args.regex, line):
+
+            # Syslog
             message = line.split()
             time_generated = message[0]
             computer = message[1]
