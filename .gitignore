@@ -8,3 +8,4 @@ terraform.tfstate.*
 /watchlist_data/*
 
 lab.auto.tfvars
+logger.conf

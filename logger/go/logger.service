@@ -1,0 +1,13 @@
+[Unit]
+Description="custom logger service to send logs to Azure DCR"
+After=network.target
+StartLimitIntervalSec=0
+[Service]
+Type=simple
+Restart=always
+RestartSec=1
+User=loggeruser
+ExecStart=/opt/logger/logger -conf /opt/logger/logger.conf                                                             
+
+[Install]
+WantedBy=multi-user.target

@@ -65,59 +65,27 @@ resource "azurerm_monitor_data_collection_rule" "dcr_unifi_logs" {
     }
   }
 
-  data_sources {
-    syslog {
-      facility_names = ["*"]
-      log_levels     = ["*"]
-      name           = "datasource-syslog"
-      streams        = ["Microsoft-Syslog"]
-    }
-  }
-
-  data_flow {
-    streams       = ["Microsoft-Syslog"]
-    destinations  = [local.law_dest_name]
-    output_stream = local.unifi_stream_name
-    transform_kql = <<-EOT
-                      source
-                      | where SyslogMessage !startswith_cs "["
-                      | project TimeGenerated, Computer, Message=SyslogMessage
-      EOT
-  }
-
-  stream_declaration {
-    stream_name = local.unifi_stream_name
-
-    dynamic "column" {
-      for_each = local.unifi_log_def
-      content {
-        name = column.value.name
-        type = column.value.type
-      }
-    }
-  }
 
   ###################################################
 
   data_flow {
-    streams = [local.unifi_firewall_stream_name]
-    # streams = ["Microsoft-Syslog"]
-    destinations = [local.law_dest_name]
+    streams       = [local.unifi_firewall_stream_name]
+    destinations  = [local.law_dest_name]
     output_stream = local.unifi_firewall_stream_name
-    # transform_kql = <<-EOT
-    #                source
-    #                 | where Message startswith_cs "["
-    #                 | project TimeGenerated, Message
-    #                 | parse kind=relaxed Message with "[" Rule:string "]" _INTERFACE:string " MAC=" MAC:string " SRC=" SourceIP:string " DST=" DestIP:string " LEN=" Length " TOS=" TypeOfService:string " PREC=" Precedence:string " TTL=" TTL:int " ID=" ID:string " PROTO=" Protocol:string " " _REST
-    #                 | parse kind=relaxed _REST with "SPT=" SourcePort:int " DPT=" DestPort:int " WINDOW=" WindowSize:int " RES=" Reserved:string " " Flags:string " URGP=" Urgent:int
-    #                 | parse _INTERFACE with "IN=" InterfaceIn " OUT=" InterfaceOut
-    #                 | project-away _INTERFACE, _REST
-    #                 | extend Fragment = split(ID, " ", 1)[0]
-    #                 | extend ID = split(ID, " ", 0)[0]
-    #                 | project TimeGenerated, Rule, SourceIP, DestIP, SourcePort, DestPort, Protocol, Length, TTL, Flags, MAC, ID, WindowSize, TypeOfService, InterfaceIn, InterfaceOut, Precedence, Urgent, Reserved, Fragment, Message
-    # EOT
+    transform_kql = <<-EOT
+                    source
+                    | where Message startswith_cs "["
+                    | project TimeGenerated, Message
+                    | parse kind=relaxed Message with "[" Rule:string "]" _INTERFACE:string " MAC=" MAC:string " SRC=" SourceIP:string " DST=" DestIP:string " LEN=" Length " TOS=" TypeOfService:string " PREC=" Precedence:string " TTL=" TTL:int " ID=" ID:string " PROTO=" Protocol:string " " _REST
+                    | parse kind=relaxed _REST with "SPT=" SourcePort:int " DPT=" DestPort:int " WINDOW=" WindowSize:int " RES=" Reserved:string " " Flags:string " URGP=" Urgent:int
+                    | parse _INTERFACE with "IN=" InterfaceIn " OUT=" InterfaceOut
+                    | project-away _INTERFACE, _REST
+                    | extend Fragment = split(ID, " ", 1)[0]
+                    | extend ID = split(ID, " ", 0)[0]
+                    | project TimeGenerated, Rule, SourceIP, DestIP, SourcePort, DestPort, Protocol, Length, TTL, Flags, MAC, ID, WindowSize, TypeOfService, InterfaceIn, InterfaceOut, Precedence, Urgent, Reserved, Fragment, Message
+    EOT
   }
-
+  
   stream_declaration {
     stream_name = local.unifi_firewall_stream_name
 

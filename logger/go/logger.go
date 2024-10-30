@@ -21,8 +21,6 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/monitor/ingestion/azlogs"
 )
 
-var logFile = "/var/log/syslog"
-
 var LOG_TYPES = []string{"Custom", "Unifi"} // add syslog
 var HOSTNAME string
 
@@ -69,25 +67,14 @@ func main() {
 		panic(err)
 	}
 
-	var re *regexp.Regexp
-	if flags.regex != "" {
-		re = regexp.MustCompile(flags.regex)
-	}
+	re := regexp.MustCompile(flags.regex)
 
 	for line := range t.Lines {
 
-		fmt.Println(line.Text)
-
-		if flags.regex != "" && re.MatchString(line.Text) == false {
-
-			continue
+		if re.MatchString(line.Text) {
+			var log_data = log_to_format(flags.log_type, line.Text)
+			upload_logs(client, flags.log_id, flags.stream, log_data)
 		}
-
-		var log_data = log_to_format(flags.log_type, line.Text)
-
-		upload_logs(client, flags.log_id, flags.stream, log_data)
-
-		fmt.Println(line.Text)
 	}
 }
 
@@ -95,7 +82,7 @@ func get_default_creds() *azidentity.DefaultAzureCredential {
 
 	creds, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
-		log.Fatalf("Failed to obtain a credential: %v", err)
+		// log.Fatalf("Failed to obtain a credential: %v", err)
 	}
 
 	return creds
@@ -133,6 +120,42 @@ func get_client_secret_creds(file_path string) *azidentity.ClientSecretCredentia
 	}
 
 	return creds
+}
+
+// TODO make this and the function get_client_secret_creds() generic share the logic for collection conf values
+func get_conf_from_file(file_path string, flags *FlagStruct) *FlagStruct {
+
+	file, err := os.Open(file_path)
+	if err != nil {
+		panic(err)
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := scanner.Text()
+		if strings.HasPrefix(line, "FILE=") {
+			flags.file = strings.TrimPrefix(line, "FILE=")
+		} else if strings.HasPrefix(line, "LOG_TYPE=") {
+			flags.log_type = strings.TrimPrefix(line, "LOG_TYPE=")
+		} else if strings.HasPrefix(line, "REGEX=") {
+			flags.regex = strings.TrimPrefix(line, "REGEX=")
+		} else if strings.HasPrefix(line, "ENDPOINT=") {
+			flags.endpoint = strings.TrimPrefix(line, "ENDPOINT=")
+		} else if strings.HasPrefix(line, "STREAM=") {
+			flags.stream = strings.TrimPrefix(line, "STREAM=")
+		} else if strings.HasPrefix(line, "ID=") {
+			flags.log_id = strings.TrimPrefix(line, "ID=")
+		} else if strings.HasPrefix(line, "CREDS=") {
+			flags.creds = strings.TrimPrefix(line, "CREDS=")
+		}
+	}
+
+	if err := scanner.Err(); err != nil {
+		panic(err)
+	}
+
+	return flags
 }
 
 func log_to_format(format string, line string) []byte {
@@ -177,28 +200,36 @@ func upload_logs(client *azlogs.Client, logId string, streamName string, logData
 
 	_, err := client.Upload(context.TODO(), logId, streamName, logData, nil)
 	if err != nil {
-		log.Fatalf("Failed to send logs: %v", err)
+		// log.Fatalf("Failed to send logs: %v", err)
+		log.Print("Failed to send logs: %v", err)
 	}
 }
 
 func parse_arguments() FlagStruct {
 
 	var flags FlagStruct
+	var confFile string
 
+	flag.StringVar(&confFile, "conf", "", "Path to conf file")
 	flag.StringVar(&flags.file, "file", "", "Path to file")
 	flag.StringVar(&flags.creds, "creds", "", "Path to file with Azure credentials")
 	flag.StringVar(&flags.log_type, "log_type", "Custom", "Type of log file. Supported values are Custom, System, Security")
-	flag.StringVar(&flags.regex, "regex", "", "Regex to filter the logs")
+	flag.StringVar(&flags.regex, "regex", ".*", "Regex to filter the logs")
 	flag.StringVar(&flags.endpoint, "endpoint", "", "Data collection endpoint url")
 	flag.StringVar(&flags.stream, "stream", "", "Stream name")
 	flag.StringVar(&flags.log_id, "id", "", "Immutable Id of DCR")
 
 	flag.Parse()
 
+	if confFile != "" {
+		get_conf_from_file(confFile, &flags)
+		// fmt.Printf("%+v\n", flags)
+	}
+
 	if flags.file == "" {
 		fmt.Println("Error: -file is a required flag")
 		flag.Usage()
-		os.Exit(1)
+		os.Exit(99)
 	}
 
 	// if flags.creds == "" {
@@ -207,22 +238,32 @@ func parse_arguments() FlagStruct {
 	// 	os.Exit(1)
 	// }
 
+	// if flags.log_type == "" {
+	// 	fmt.Println("Error: -log_type is a required flag")
+	// 	flag.Usage()
+	// 	os.Exit(1)
+	// }
+
+	if flags.regex == "" {
+		flags.regex = ".*"
+	}
+
 	if flags.endpoint == "" {
 		fmt.Println("Error: -Endpoint is a required flag")
 		flag.Usage()
-		os.Exit(1)
+		os.Exit(98)
 	}
 
 	if flags.stream == "" {
 		fmt.Println("Error: -Stream is a required flag")
 		flag.Usage()
-		os.Exit(1)
+		os.Exit(97)
 	}
 
 	if flags.log_id == "" {
 		fmt.Println("Error: -Id is a required flag")
 		flag.Usage()
-		os.Exit(1)
+		os.Exit(96)
 	}
 
 	return flags
