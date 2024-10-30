@@ -23,6 +23,8 @@ resource "azurerm_storage_account" "watchlist_sa" {
       max_age_in_seconds = 0
     }
   }
+
+  tags = var.tags
 }
 
 resource "azurerm_storage_container" "watchlist_sa_container" {
