@@ -76,12 +76,14 @@ resource "azurerm_monitor_data_collection_rule" "dcr_unifi_logs" {
                     source
                     | where Message startswith_cs "["
                     | project TimeGenerated, Message
-                    | parse kind=relaxed Message with "[" Rule:string "]" _INTERFACE:string " MAC=" MAC:string " SRC=" SourceIP:string " DST=" DestIP:string " LEN=" Length " TOS=" TypeOfService:string " PREC=" Precedence:string " TTL=" TTL:int " ID=" ID:string " PROTO=" Protocol:string " " _REST
-                    | parse kind=relaxed _REST with "SPT=" SourcePort:int " DPT=" DestPort:int " WINDOW=" WindowSize:int " RES=" Reserved:string " " Flags:string " URGP=" Urgent:int
+                    | parse kind=relaxed Message with "[" Rule:string "]" _INTERFACE:string " MAC=" MAC:string " SRC=" SourceIP:string " DST=" DestIP:string
+                    | parse kind=relaxed Message with * " LEN=" Length:int " TOS=" TypeOfService:string " PREC=" Precedence:string " TTL=" TTL:int " ID=" ID:string
+                    | parse kind=relaxed Message with * " PROTO=" Protocol:string "SPT=" SourcePort:int " DPT=" DestPort:int " WINDOW=" WindowSize:int " RES=" Reserved:string " " Flags:string " URGP=" Urgent:int
+                    | parse kind=relaxed Message with * "SPT=" SourcePort:int " DPT=" DestPort:int " WINDOW=" WindowSize:int " RES=" Reserved:string " " Flags:string " URGP=" Urgent:int
                     | parse _INTERFACE with "IN=" InterfaceIn " OUT=" InterfaceOut
-                    | project-away _INTERFACE, _REST
-                    | extend Fragment = split(ID, " ", 1)[0]
-                    | extend ID = split(ID, " ", 0)[0]
+                    | project-away _INTERFACE
+                    | extend Fragment = tostring(split(ID, " ", 1)[0])
+                    | extend ID = toint(split(ID, " ", 0)[0])
                     | project TimeGenerated, Rule, SourceIP, DestIP, SourcePort, DestPort, Protocol, Length, TTL, Flags, MAC, ID, WindowSize, TypeOfService, InterfaceIn, InterfaceOut, Precedence, Urgent, Reserved, Fragment, Message
     EOT
   }

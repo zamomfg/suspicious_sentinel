@@ -4,6 +4,7 @@ terraform.tfstate.*
 .terraform.lock.hcl
 
 /logger/var.env
+/logger/sample.log
 /logger/test.log
 /watchlist_data/*
 
