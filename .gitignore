@@ -3,10 +3,9 @@
 terraform.tfstate.*
 .terraform.lock.hcl
 
-/logger/var.env
-/logger/sample.log
-/logger/test.log
+/test_data/*
 /watchlist_data/*
 
 lab.auto.tfvars
 logger.conf
+var.env
