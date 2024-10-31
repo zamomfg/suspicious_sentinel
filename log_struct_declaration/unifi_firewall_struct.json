@@ -50,6 +50,16 @@
         "description": "enter_description"
     },
     {
+        "name": "SourceLocation",
+        "type": "dynamic",
+        "description": "enter_description"
+    },
+    {
+        "name": "DestLocation",
+        "type": "dynamic",
+        "description": "enter_description"
+    },
+    {
         "name": "MAC",
         "type": "string",
         "description": "enter_description"
@@ -95,7 +105,7 @@
         "description": "enter_description"
     },
     {
-        "name": "Fragment",
+        "name": "AddidtionalData",
         "type": "string",
         "description": "enter_description"
     },
