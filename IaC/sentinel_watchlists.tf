@@ -103,5 +103,19 @@ module "test_wl" {
   storage_account = azurerm_storage_account.watchlist_sa
   storage_container_name = azurerm_storage_container.watchlist_sa_container.name
   watchlist_content_file_path = "../watchlist_data/test.csv"
+  use_storage_account = true
 
 }
+
+# module "ip_asn_wl" {
+#   source = "./modules/terraform-watchlist"
+
+#   name = "ip_asn_wl"
+#   log_analytics_workspace_id = azurerm_sentinel_log_analytics_workspace_onboarding.sentinel.workspace_id
+#   item_search_key            = "IPRange"
+#   storage_account = azurerm_storage_account.watchlist_sa
+#   storage_container_name = azurerm_storage_container.watchlist_sa_container.name
+#   watchlist_content_file_path = "../watchlist_data/GeoLite2-ASN-Blocks-IPv4.csv"
+#   use_storage_account = true
+
+# }

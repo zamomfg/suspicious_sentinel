@@ -73,18 +73,29 @@ resource "azurerm_monitor_data_collection_rule" "dcr_unifi_logs" {
     destinations  = [local.law_dest_name]
     output_stream = local.unifi_firewall_stream_name
     transform_kql = <<-EOT
-                    source
-                    | where Message startswith_cs "["
-                    | project TimeGenerated, Message
-                    | parse kind=relaxed Message with "[" Rule:string "]" _INTERFACE:string " MAC=" MAC:string " SRC=" SourceIP:string " DST=" DestIP:string
-                    | parse kind=relaxed Message with * " LEN=" Length:int " TOS=" TypeOfService:string " PREC=" Precedence:string " TTL=" TTL:int " ID=" ID:string
-                    | parse kind=relaxed Message with * " PROTO=" Protocol:string "SPT=" SourcePort:int " DPT=" DestPort:int " WINDOW=" WindowSize:int " RES=" Reserved:string " " Flags:string " URGP=" Urgent:int
-                    | parse kind=relaxed Message with * "SPT=" SourcePort:int " DPT=" DestPort:int " WINDOW=" WindowSize:int " RES=" Reserved:string " " Flags:string " URGP=" Urgent:int
-                    | parse _INTERFACE with "IN=" InterfaceIn " OUT=" InterfaceOut
-                    | project-away _INTERFACE
-                    | extend Fragment = tostring(split(ID, " ", 1)[0])
-                    | extend ID = toint(split(ID, " ", 0)[0])
-                    | project TimeGenerated, Rule, SourceIP, DestIP, SourcePort, DestPort, Protocol, Length, TTL, Flags, MAC, ID, WindowSize, TypeOfService, InterfaceIn, InterfaceOut, Precedence, Urgent, Reserved, Fragment, Message
+                  source
+                  | where Message matches regex @"^\[\S+?\]IN="
+                  | project TimeGenerated, Message
+                  | parse kind=regex Message with @"\[" Rule: string @"\]" _INTERFACE: string " MAC=" MAC: string " SRC=" SourceIP: string " DST=" DestIP: string " "
+                  | parse _INTERFACE with "IN=" InterfaceIn " OUT=" InterfaceOut
+                  | parse kind=regex Message with * " LEN=" Length: int " TOS=" TypeOfService: string " PREC=" Precedence: string " TTL=" TTL: int " ID=" ID: string " PROTO="
+                  | parse kind=regex Message with * " SPT=" SourcePort: int " DPT=" DestPort: int " "
+                  | parse kind=relaxed Message with * " WINDOW=" WindowSize: int " RES=" Reserved: string " " Flags: string " URGP=" Urgent: int
+                  | extend Protocol = extract("PROTO=(.*?) ", 1, Message)
+                  | extend Flags = strcat_delim(" ", Flags, split(ID, " ", 1)[0])
+                  | extend ID = toint(split(ID, " ", 0)[0])
+                  | extend AddidtionalData = iff(Protocol == "ICMP", 
+                          tostring(
+                              bag_pack(
+                                  "ICMPCode", extract("CODE=(.*?) ", 1, Message),
+                                  "ICMPID", extract(@"CODE=\d ID=(.*?) ", 1, Message),
+                                  "ICMSequence", extract("SEQ=(.*?) ", 1, Message)
+                              )
+                          )
+                      , "")
+                  | extend SourceLocation = geo_location(SourceIP)
+                  | extend DestLocation = geo_location(DestIP)
+                  | project TimeGenerated, Rule, SourceIP, DestIP, SourcePort, DestPort, Protocol, Length, TTL, Flags, SourceLocation, DestLocation, MAC, ID, WindowSize, TypeOfService, InterfaceIn, InterfaceOut, Precedence, Urgent, Reserved, AddidtionalData, Message
     EOT
   }
   
