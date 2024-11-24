@@ -94,18 +94,18 @@ resource "azurerm_storage_container" "watchlist_sa_container" {
 #   content_md5            = md5(local.watch_list_tor_ips)
 # }
 
-module "test_wl" {
-  source = "./modules/terraform-watchlist"
+# module "test_wl" {
+#   source = "./modules/terraform-watchlist"
 
-  name = "test_wl"
-  log_analytics_workspace_id = azurerm_sentinel_log_analytics_workspace_onboarding.sentinel.workspace_id
-  item_search_key            = "name"
-  storage_account = azurerm_storage_account.watchlist_sa
-  storage_container_name = azurerm_storage_container.watchlist_sa_container.name
-  watchlist_content_file_path = "../watchlist_data/test.csv"
-  use_storage_account = true
+#   name = "test_wl"
+#   log_analytics_workspace_id = azurerm_sentinel_log_analytics_workspace_onboarding.sentinel.workspace_id
+#   item_search_key            = "name"
+#   storage_account = azurerm_storage_account.watchlist_sa
+#   storage_container_name = azurerm_storage_container.watchlist_sa_container.name
+#   watchlist_content_file_path = "../watchlist_data/test.csv"
+#   use_storage_account = true
 
-}
+# }
 
 # module "ip_asn_wl" {
 #   source = "./modules/terraform-watchlist"

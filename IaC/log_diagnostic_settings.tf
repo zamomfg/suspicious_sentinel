@@ -90,6 +90,7 @@ resource "azurerm_monitor_aad_diagnostic_setting" "azure_ad_diagnostic_settings"
     }
   }
 
+  # The cost about 300 sek a week for my usage
   enabled_log {
     category = "MicrosoftGraphActivityLogs"
     retention_policy {

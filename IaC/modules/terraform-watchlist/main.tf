@@ -119,11 +119,11 @@ data "azurerm_storage_account_blob_container_sas" "sas_token" {
 
   permissions {
     read   = true
-    write  = true
-    delete = true
+    write  = false
+    delete = false
     list   = true
-    add    = true
-    create = true
+    add    = false
+    create = false
   }
 
   depends_on = [
@@ -131,9 +131,20 @@ data "azurerm_storage_account_blob_container_sas" "sas_token" {
   ]
 }
 
+output "sas_token_out" {
+  value = local.sas_token_url
+}
+
 locals {
   sas_token_url = try("${azurerm_storage_blob.watchlist_blob[0].url}${data.azurerm_storage_account_blob_container_sas.sas_token[0].sas}", null)
   sensitive     = true
+}
+
+output "sas_token" {
+  value = {
+            container_name = var.name,
+            sas_token = local.sas_token_url
+          }
 }
 
 resource "azurerm_sentinel_watchlist" "watchlist" {
@@ -149,7 +160,7 @@ locals {
 }
 
 resource "azurerm_sentinel_watchlist_item" "watchlist_item" {
-  count = length(local.watchlist_data_csv)
+  count = var.use_storage_account == true ? 0 : length(local.watchlist_data_csv) 
 
   watchlist_id = azurerm_sentinel_watchlist.watchlist.id
 

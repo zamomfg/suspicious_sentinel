@@ -14,6 +14,8 @@ resource "azurerm_log_analytics_workspace" "law" {
   sku               = "PerGB2018"
   retention_in_days = var.law_global_reteion_days
 
+  # data_collection_rule_id = azurerm_monitor_data_collection_rule.workspace_dcr.id
+  data_collection_rule_id = data.azurerm_monitor_data_collection_rule.workspace_dcr.id
 }
 
 resource "azurerm_sentinel_log_analytics_workspace_onboarding" "sentinel" {
@@ -161,6 +163,31 @@ resource "azapi_resource" "law_table_unifi_firewall" {
   depends_on                = [azurerm_log_analytics_workspace.law]
 }
 
+resource "azurerm_monitor_data_collection_rule" "workspace_dcr" {
+  name                = "dcr-workspace-${local.location_short}-001"
+  location            = azurerm_resource_group.rg_log.location
+  resource_group_name = azurerm_resource_group.rg_log.name
+  tags                = var.tags
+
+  kind = "WorkspaceTransforms"
+
+  destinations {
+    log_analytics {
+      workspace_resource_id = azurerm_log_analytics_workspace.law.id
+      name                  = local.law_dest_name
+    }
+  }
+
+  data_flow {
+    streams       = ["Microsoft-Table-MicrosoftGraphActivityLogs"]
+    destinations  = [local.law_dest_name]
+    transform_kql = <<-EOT
+                  source
+                  | where ServicePrincipalId != "57a2c1e0-6ad0-4b82-9bc5-608f503c3894"
+    EOT
+  }
+
+}
 
 
 # module "custom_logging" {
