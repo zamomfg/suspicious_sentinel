@@ -83,6 +83,12 @@ resource "azurerm_monitor_data_collection_rule" "dcr_unifi_logs" {
                   | parse kind=regex Message with * " LEN=" Length: int " TOS=" TypeOfService: string " PREC=" Precedence: string " TTL=" TTL: int " ID=" ID: string " PROTO="
                   | parse kind=regex Message with * " SPT=" SourcePort: int " DPT=" DestPort: int " "
                   | parse kind=relaxed Message with * " WINDOW=" WindowSize: int " RES=" Reserved: string " " Flags: string " URGP=" Urgent: int
+                  | parse Rule with Rule "-" Action
+                  | extend Action = case(
+                      Action == "D", "Drop",
+                      Action == "R", "Rejected",
+                      Action == "RET", "Accepted",
+                      "Unknown")
                   | extend Protocol = extract("PROTO=(.*?) ", 1, Message)
                   | extend Flags = strcat_delim(" ", Flags, split(ID, " ", 1)[0])
                   | extend ID = toint(split(ID, " ", 0)[0])
@@ -97,7 +103,7 @@ resource "azurerm_monitor_data_collection_rule" "dcr_unifi_logs" {
                       , "")
                   | extend SourceLocation = geo_location(SourceIP)
                   | extend DestLocation = geo_location(DestIP)
-                  | project TimeGenerated, Rule, SourceIP, DestIP, SourcePort, DestPort, Protocol, Length, TTL, Flags, SourceLocation, DestLocation, MAC, ID, WindowSize, TypeOfService, InterfaceIn, InterfaceOut, Precedence, Urgent, Reserved, AddidtionalData, Message
+                  | project TimeGenerated, Action, Rule, SourceIP, DestIP, SourcePort, DestPort, Protocol, Length, TTL, Flags, SourceLocation, DestLocation, MAC, ID, WindowSize, TypeOfService, InterfaceIn, InterfaceOut, Precedence, Urgent, Reserved, AddidtionalData, Message
     EOT
   }
   
