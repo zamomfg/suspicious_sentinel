@@ -33,6 +33,8 @@ resource "azurerm_storage_container" "watchlist_sa_container" {
   container_access_type = "private"
 }
 
+
+
 # resource "azurerm_sentinel_watchlist" "watchlist_ip_asn" {
 #   name                       = "IpASN-wl"
 #   display_name               = "IpASN-wl"

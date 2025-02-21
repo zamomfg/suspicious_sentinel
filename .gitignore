@@ -9,3 +9,5 @@ terraform.tfstate.*
 lab.auto.tfvars
 logger.conf
 var.env
+
+.vscode
