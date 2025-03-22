@@ -4,6 +4,9 @@ locals {
   # ip_asn_csv = csvdecode(file("${local.watchlist_data_base_dir}/GeoLite2-ASN-Blocks-IPv4.csv"))
 
   # tor_exit_nodes = toset(split("\n", data.http.tor_exit_nodes_data.response_body))
+
+  sub = "/subscription"
+  permission_storage_blob_data_contributor = "providers/Microsoft.Authorization/roleDefinitions/ba92f5b4-2d11-453d-a403-e96b0029c9fe"
 }
 
 resource "azurerm_storage_account" "watchlist_sa" {
@@ -33,6 +36,11 @@ resource "azurerm_storage_container" "watchlist_sa_container" {
   container_access_type = "private"
 }
 
+resource "azurerm_role_assignment" "watchlist_role_assignment" {
+  scope               = azurerm_storage_account.watchlist_sa.id
+  role_definition_id  = join("/", [local.sub, var.subscription_id, local.permission_storage_blob_data_contributor])
+  principal_id        = var.devops_project_object_id
+}
 
 
 # resource "azurerm_sentinel_watchlist" "watchlist_ip_asn" {
