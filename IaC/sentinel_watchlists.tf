@@ -39,7 +39,7 @@ resource "azurerm_storage_container" "watchlist_sa_container" {
 resource "azurerm_role_assignment" "watchlist_role_assignment" {
   scope               = azurerm_storage_account.watchlist_sa.id
   role_definition_id  = join("/", [local.sub, var.subscription_id, local.permission_storage_blob_data_contributor])
-  principal_id        = var.devops_project_object_id
+  principal_id        = var.current_sp_id
 }
 
 
