@@ -72,4 +72,4 @@ jobs:
 
       - name: "Terraform Apply"
         id: apply
-        run: terraform apply -auto-approve -lock=false -lock-timeout=30s -var-file ../lab.auto.tfvars # uses subscription id from the env
+        run: terraform apply -auto-approve -lock-timeout=30s -var-file ../lab.auto.tfvars -var="subscription_id=${{ vars.AZURE_SUBSCRIPTION_ID }}"
