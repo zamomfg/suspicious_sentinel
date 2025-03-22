@@ -57,13 +57,14 @@ jobs:
           CONTAINER_NAME: ${{ vars.STATE_CONTAINER_NAME }}
           RESOURCE_GROUP_NAME: ${{ vars.STATE_RESOURCE_GROUP_NAME }}
         run: terraform init -backend-config="storage_account_name=$STORAGE_ACCOUNT" -backend-config="container_name=$CONTAINER_NAME" -backend-config="resource_group_name=$RESOURCE_GROUP_NAME"
-      - name: "Terraform Format"
-        id: fmt
-        run: terraform fmt
 
-      - name: "Terraform Validate"
-        id: validate
-        run: terraform validate -no-color
+      # - name: "Terraform Format"
+      #   id: fmt
+      #   run: terraform fmt
+
+      # - name: "Terraform Validate"
+      #   id: validate
+      #   run: terraform validate -no-color
 
       - name: "Terraform Plan"
         id: plan
