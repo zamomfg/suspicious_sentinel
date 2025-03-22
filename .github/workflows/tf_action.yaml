@@ -37,6 +37,9 @@ jobs:
       - name: "pwd"
         run: pwd
 
+      - name: "ls"
+        run: ls
+
       - name: "Terraform Init"
         id: init
         env:
