@@ -11,10 +11,10 @@ permissions:
   contents: read
 
 env:
-  ARM_CLIENT_ID: ${{ env.AZURE_CLIENT_ID }}
-  ARM_SUBSCRIPTION_ID: ${{ env.AZURE_SUBSCRIPTION_ID }}
-  ARM_TENANT_ID: ${{ env.AZURE_TENANT_ID }}
-  TF_VAR_current_sp_id: ${{ env.AZURE_CLIENT_ID }} # Used for getting the id of the current SP
+  ARM_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+  ARM_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+  ARM_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+  TF_VAR_current_sp_id: ${{ vars.AZURE_CLIENT_ID }} # Used for getting the id of the current SP
   TF_LOG: INFO
 
 jobs:
@@ -34,9 +34,9 @@ jobs:
       - name: "Az CLI login"
         uses: azure/login@v1
         with:
-          client-id: ${{env.AZURE_CLIENT_ID}}
-          tenant-id: ${{env.AZURE_TENANT_ID}}
-          subscription-id: ${{env.AZURE_SUBSCRIPTION_ID}}
+          client-id: ${{vars.AZURE_CLIENT_ID}}
+          tenant-id: ${{vars.AZURE_TENANT_ID}}
+          subscription-id: ${{vars.AZURE_SUBSCRIPTION_ID}}
 
       - name: "Az account"
         run: az account show
@@ -53,9 +53,9 @@ jobs:
       - name: "Terraform Init"
         id: init
         env:
-          STORAGE_ACCOUNT: ${{ env.STATE_STORAGE_ACCOUNT }}
-          CONTAINER_NAME: ${{ env.STATE_CONTAINER_NAME }}
-          RESOURCE_GROUP_NAME: ${{ env.STATE_RESOURCE_GROUP_NAME }}
+          STORAGE_ACCOUNT: ${{ vars.STATE_STORAGE_ACCOUNT }}
+          CONTAINER_NAME: ${{ vars.STATE_CONTAINER_NAME }}
+          RESOURCE_GROUP_NAME: ${{ vars.STATE_RESOURCE_GROUP_NAME }}
         run: terraform init -backend-config="storage_account_name=$STORAGE_ACCOUNT" -backend-config="container_name=$CONTAINER_NAME" -backend-config="resource_group_name=$RESOURCE_GROUP_NAME"
       - name: "Terraform Format"
         id: fmt
