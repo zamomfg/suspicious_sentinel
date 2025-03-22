@@ -32,7 +32,7 @@ jobs:
         run: az account show
 
       - name: "cd to IaC dir"
-        run: cd IaC
+        run: cd IaC/
 
       - name: "pwd"
         run: pwd
