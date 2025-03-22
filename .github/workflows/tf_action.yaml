@@ -15,7 +15,7 @@ env:
   ARM_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
   ARM_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
   TF_VAR_current_sp_id: ${{ vars.AZURE_CLIENT_ID }} # Used for getting the id of the current SP
-  # TF_LOG: INFO
+  TF_LOG: INFO
 
 jobs:
   terraform:
