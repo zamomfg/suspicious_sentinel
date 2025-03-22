@@ -11,14 +11,15 @@ terraform {
     }
   }
 
-  backend "local" {
-    path = "../Backend/terraform.tfstate"
-    }
+  backend "azurerm" {
+      use_oidc         = true
+      use_azuread_auth = true
+      key              = "${var.app_name}-terraform.tfstate"
+  }
 }
 
-# Configure the Microsoft Azure Provider
 provider "azurerm" {
-  resource_provider_registrations = "none" # This is only required when the User, Service Principal, or Identity running Terraform lacks the permissions to register Azure Resource Providers.
+  resource_provider_registrations = "none"
   features {}
   subscription_id = var.subscription_id
 }

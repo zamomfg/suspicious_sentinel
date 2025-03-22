@@ -1,14 +1,14 @@
 
-resource "azurerm_resource_group" "rg_log" {
-  name     = "rg-${var.app_name}-${local.location_short}-001"
-  location = var.location
-  tags     = var.tags
-}
+# resource "azurerm_resource_group" "rg_log" {
+#   name     = "rg-${var.app_name}-${local.location_short}-001"
+#   location = var.location
+#   tags     = var.tags
+# }
 
 resource "azurerm_log_analytics_workspace" "law" {
   name                = "law-${var.app_name}-${local.location_short}-001"
-  location            = azurerm_resource_group.rg_log.location
-  resource_group_name = azurerm_resource_group.rg_log.name
+  location            = data.azurerm_resource_group.rg_log.location
+  resource_group_name = data.azurerm_resource_group.rg_log.name
   tags                = var.tags
 
   sku               = "PerGB2018"
@@ -24,8 +24,8 @@ resource "azurerm_sentinel_log_analytics_workspace_onboarding" "sentinel" {
 
 resource "azurerm_monitor_data_collection_endpoint" "dce_unifi_logs" {
   name                = "dce-unifi-${local.location_short}-001"
-  resource_group_name = azurerm_resource_group.rg_log.name
-  location            = azurerm_resource_group.rg_log.location
+  resource_group_name = data.azurerm_resource_group.rg_log.name
+  location            = data.azurerm_resource_group.rg_log.location
   tags                = var.tags
 }
 
@@ -54,8 +54,8 @@ locals {
 
 resource "azurerm_monitor_data_collection_rule" "dcr_unifi_logs" {
   name                = "dcr-unifi-${local.location_short}-001"
-  location            = azurerm_resource_group.rg_log.location
-  resource_group_name = azurerm_resource_group.rg_log.name
+  location            = data.azurerm_resource_group.rg_log.location
+  resource_group_name = data.azurerm_resource_group.rg_log.name
   tags                = var.tags
 
   data_collection_endpoint_id = azurerm_monitor_data_collection_endpoint.dce_unifi_logs.id
@@ -78,17 +78,11 @@ resource "azurerm_monitor_data_collection_rule" "dcr_unifi_logs" {
                   source
                   | where Message matches regex @"^\[\S+?\]IN="
                   | project TimeGenerated, Message
-                  | parse kind=regex Message with @"\[" Rule: string @"\]" _INTERFACE: string " MAC=" MAC: string " SRC=" SourceIP: string " DST=" DestIP: string " "
+                  | parse kind=regex Message with @"\[" Rule: string "-" Action: string @"\]" _INTERFACE: string " MAC=" MAC: string " SRC=" SourceIP: string " DST=" DestIP: string " "
                   | parse _INTERFACE with "IN=" InterfaceIn " OUT=" InterfaceOut
                   | parse kind=regex Message with * " LEN=" Length: int " TOS=" TypeOfService: string " PREC=" Precedence: string " TTL=" TTL: int " ID=" ID: string " PROTO="
                   | parse kind=regex Message with * " SPT=" SourcePort: int " DPT=" DestPort: int " "
                   | parse kind=relaxed Message with * " WINDOW=" WindowSize: int " RES=" Reserved: string " " Flags: string " URGP=" Urgent: int
-                  | parse Rule with Rule "-" Action
-                  | extend Action = case(
-                      Action == "D", "Drop",
-                      Action == "R", "Rejected",
-                      Action == "RET", "Accepted",
-                      "Unknown")
                   | extend Protocol = extract("PROTO=(.*?) ", 1, Message)
                   | extend Flags = strcat_delim(" ", Flags, split(ID, " ", 1)[0])
                   | extend ID = toint(split(ID, " ", 0)[0])
@@ -141,8 +135,8 @@ resource "azapi_resource" "law_table_unifi" {
         name    = local.unifi_table_name
         columns = local.unifi_log_def
       }
-      retentionInDays      = -1
-      totalRetentionInDays = -1
+      retentionInDays      = var.law_global_reteion_days
+      totalRetentionInDays = var.law_global_reteion_days
     }
   }
 
@@ -160,8 +154,8 @@ resource "azapi_resource" "law_table_unifi_firewall" {
         name    = local.unifi_firewall_table_name
         columns = local.unifi_firewall_log_def
       }
-      retentionInDays      = -1
-      totalRetentionInDays = -1
+      retentionInDays      = var.law_global_reteion_days
+      totalRetentionInDays = var.law_global_reteion_days
     }
   }
 
@@ -171,8 +165,8 @@ resource "azapi_resource" "law_table_unifi_firewall" {
 
 resource "azurerm_monitor_data_collection_rule" "workspace_dcr" {
   name                = "dcr-workspace-${local.location_short}-001"
-  location            = azurerm_resource_group.rg_log.location
-  resource_group_name = azurerm_resource_group.rg_log.name
+  location            = data.azurerm_resource_group.rg_log.location
+  resource_group_name = data.azurerm_resource_group.rg_log.name
   tags                = var.tags
 
   kind = "WorkspaceTransforms"
@@ -200,8 +194,8 @@ resource "azurerm_monitor_data_collection_rule" "workspace_dcr" {
 #   source = "./modules/terraform-logging-data-stream"
 
 #   dcr_name            = "dcr-log-${local.location_short}-001"
-#   location            = azurerm_resource_group.rg_log.location
-#   resource_group_name = azurerm_resource_group.rg_log.name
+#   location            = data.azurerm_resource_group.rg_log.location
+#   resource_group_name = data.azurerm_resource_group.rg_log.name
 #   workspace_resource_id = azurerm_log_analytics_workspace.law.id
 #   tags                = var.tags
 #   # data_collection_endpoint_id = azurerm_monitor_data_collection_endpoint.dce_unifi_logs.id 

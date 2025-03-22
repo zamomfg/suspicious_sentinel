@@ -8,8 +8,8 @@ locals {
 
 resource "azurerm_storage_account" "watchlist_sa" {
   name                = "sasentinelwl${local.location_short}001"
-  resource_group_name = azurerm_resource_group.rg_log.name
-  location            = azurerm_resource_group.rg_log.location
+  resource_group_name = data.azurerm_resource_group.rg_log.name
+  location            = data.azurerm_resource_group.rg_log.location
 
   account_tier             = "Standard"
   account_replication_type = "LRS"

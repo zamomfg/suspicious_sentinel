@@ -6,7 +6,6 @@ terraform.tfstate.*
 /test_data/*
 /watchlist_data/*
 
-lab.auto.tfvars
 logger.conf
 var.env
 
