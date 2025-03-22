@@ -66,10 +66,10 @@ jobs:
       #   id: validate
       #   run: terraform validate -no-color
 
-      - name: "Terraform Plan"
-        id: plan
-        run: terraform plan -no-color -lock-timeout=30s -var-file ../lab.auto.tfvars # uses subscription id from the env
+      # - name: "Terraform Plan"
+      #   id: plan
+      #   run: terraform plan -no-color -lock-timeout=30s -var-file ../lab.auto.tfvars # uses subscription id from the env
 
       - name: "Terraform Apply"
         id: apply
-        run: terraform apply -lock-timeout=30s -var-file ../lab.auto.tfvars # uses subscription id from the env
+        run: terraform apply -auto-approve -lock-timeout=30s -var-file ../lab.auto.tfvars # uses subscription id from the env
