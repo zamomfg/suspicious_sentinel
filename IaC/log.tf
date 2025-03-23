@@ -78,11 +78,12 @@ resource "azurerm_monitor_data_collection_rule" "dcr_unifi_logs" {
                   source
                   | where Message matches regex @"^\[\S+?\]IN="
                   | project TimeGenerated, Message
-                  | parse kind=regex Message with @"\[" Rule: string "+-" Action: string @"\]" _INTERFACE: string " MAC=" MAC: string " SRC=" SourceIP: string " DST=" DestIP: string " "
+                  | parse kind=regex Message with @"\["  Rule: string "-" RuleNr: string "-" Action: string @"\]" _INTERFACE: string " MAC=" MAC: string " SRC=" SourceIP: string " DST=" DestIP: string " "
                   | parse _INTERFACE with "IN=" InterfaceIn " OUT=" InterfaceOut
                   | parse kind=regex Message with * " LEN=" Length: int " TOS=" TypeOfService: string " PREC=" Precedence: string " TTL=" TTL: int " ID=" ID: string " PROTO="
                   | parse kind=regex Message with * " SPT=" SourcePort: int " DPT=" DestPort: int " "
                   | parse kind=relaxed Message with * " WINDOW=" WindowSize: int " RES=" Reserved: string " " Flags: string " URGP=" Urgent: int
+                  | extend Rule = strcat(Rule, "-", RuleNr)
                   | extend Action = case(
                       Action == "D", "Dropped",
                       Action == "R", "Rejected",
