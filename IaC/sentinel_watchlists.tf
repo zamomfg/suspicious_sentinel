@@ -4,9 +4,6 @@ locals {
   # ip_asn_csv = csvdecode(file("${local.watchlist_data_base_dir}/GeoLite2-ASN-Blocks-IPv4.csv"))
 
   # tor_exit_nodes = toset(split("\n", data.http.tor_exit_nodes_data.response_body))
-
-  # sub = "/subscription"
-  # permission_storage_blob_data_contributor = "providers/Microsoft.Authorization/roleDefinitions/ba92f5b4-2d11-453d-a403-e96b0029c9fe"
 }
 
 resource "azurerm_storage_account" "watchlist_sa" {
@@ -42,9 +39,8 @@ output "role_id" {
 
 resource "azurerm_role_assignment" "watchlist_role_assignment" {
   scope                = azurerm_storage_account.watchlist_sa.id
-  # role_definition_id  = join("/", [local.sub, var.subscription_id, local.permission_storage_blob_data_contributor])
-  role_definition_id   = trim("${azurerm_storage_account.watchlist_sa.id}/providers/Microsoft.Authorization/roleDefinitions/ba92f5b4-2d11-453d-a403-e96b0029c9fe", "/")
-  # role_definition_name = "Storage Blob Data Contributor"
+  # role_definition_id   = trim("${azurerm_storage_account.watchlist_sa.id}/providers/Microsoft.Authorization/roleDefinitions/ba92f5b4-2d11-453d-a403-e96b0029c9fe", "/")
+  role_definition_name = "Storage Blob Data Contributor"
   principal_id         = var.current_sp_id
 }
 
