@@ -42,6 +42,8 @@ resource "azurerm_role_assignment" "watchlist_role_assignment" {
   # role_definition_id   = trim("${azurerm_storage_account.watchlist_sa.id}/providers/Microsoft.Authorization/roleDefinitions/ba92f5b4-2d11-453d-a403-e96b0029c9fe", "/")
   role_definition_name = "Storage Blob Data Contributor"
   principal_id         = var.current_sp_id
+  principal_type       = "ServicePrincipal"
+  skip_service_principal_aad_check = true
 }
 
 
