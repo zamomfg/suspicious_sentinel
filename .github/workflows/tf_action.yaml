@@ -62,9 +62,9 @@ jobs:
       #   id: fmt
       #   run: terraform fmt
 
-      # - name: "Terraform Validate"
-      #   id: validate
-      #   run: terraform validate -no-color
+      - name: "Terraform Validate"
+        id: validate
+        run: terraform validate -no-color
 
       # - name: "Terraform Plan"
       #   id: plan
