@@ -44,7 +44,7 @@ resource "azurerm_role_assignment" "watchlist_role_assignment" {
   scope                = azurerm_storage_account.watchlist_sa.id
   # role_definition_id  = join("/", [local.sub, var.subscription_id, local.permission_storage_blob_data_contributor])
   role_definition_id   = "${azurerm_storage_account.watchlist_sa.id}providers/Microsoft.Authorization/roleDefinitions/ba92f5b4-2d11-453d-a403-e96b0029c9fe"
-  role_definition_name = "Storage Blob Data Contributor"
+  # role_definition_name = "Storage Blob Data Contributor"
   principal_id         = var.current_sp_id
 }
 
