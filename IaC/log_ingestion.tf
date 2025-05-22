@@ -110,7 +110,7 @@ resource "azurerm_monitor_diagnostic_setting" "dcr_unifi_logs_diagnostics" {
   name = "dia-${azurerm_monitor_data_collection_rule.dcr_unifi_logs.name}"
   target_resource_id = azurerm_monitor_data_collection_rule.dcr_unifi_logs.id
 
-  log_analytics_workspace_id = azurerm_log_analytics_workspace.law.workspace_id
+  log_analytics_workspace_id = azurerm_log_analytics_workspace.law.id
   log_analytics_destination_type = "Dedicated"
 
   enabled_log {
@@ -190,7 +190,7 @@ resource "azurerm_monitor_diagnostic_setting" "graph_activity_dcr_diagnostics" {
   name = "dia-${azurerm_monitor_data_collection_rule.graph_activity_dcr.name}"
   target_resource_id = azurerm_monitor_data_collection_rule.graph_activity_dcr.id
 
-  log_analytics_workspace_id = azurerm_log_analytics_workspace.law.workspace_id
+  log_analytics_workspace_id = azurerm_log_analytics_workspace.law.id
   log_analytics_destination_type = "Dedicated"
 
   enabled_log {
@@ -231,7 +231,7 @@ resource "azurerm_monitor_diagnostic_setting" "workspace_dcr_diagnostics" {
   name = "dia-${azurerm_monitor_data_collection_rule.workspace_dcr.name}"
   target_resource_id = azurerm_monitor_data_collection_rule.workspace_dcr.id
 
-  log_analytics_workspace_id = azurerm_log_analytics_workspace.law.workspace_id
+  log_analytics_workspace_id = azurerm_log_analytics_workspace.law.id
   log_analytics_destination_type = "Dedicated"
 
   enabled_log {
