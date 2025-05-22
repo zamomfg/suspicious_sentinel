@@ -23,6 +23,12 @@ resource "azurerm_storage_account" "archive_storage" {
   tags = var.tags
 }
 
+resource "azurerm_role_assignment" "pipeline_permissions_archive_storage" {
+  scope                = azurerm_storage_account.archive_storage.id
+  role_definition_name = "Storage Blob Data Contributor"
+  principal_id         = var.current_sp_id
+}
+
 resource "azurerm_storage_data_lake_gen2_filesystem" "archive_storage_filesystem" {
   name               = "dlsfs-${var.app_name}-${local.location_short}-001"
   storage_account_id = azurerm_storage_account.archive_storage.id

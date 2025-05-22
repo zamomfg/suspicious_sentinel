@@ -106,6 +106,22 @@ resource "azurerm_monitor_data_collection_rule" "dcr_unifi_logs" {
 
 }
 
+resource "azurerm_monitor_diagnostic_setting" "dcr_unifi_logs_diagnostics" {
+  name = "dia-${azurerm_monitor_data_collection_rule.dcr_unifi_logs.name}"
+  target_resource_id = azurerm_monitor_data_collection_rule.dcr_unifi_logs.id
+
+  log_analytics_workspace_id = azurerm_log_analytics_workspace.law.workspace_id
+  log_analytics_destination_type = "Dedicated"
+
+  enabled_log {
+    category = "AuditEvent"
+  }
+
+  metric {
+    category = "AllMetrics"
+  }
+}
+
 ############################
 ############################
 
@@ -170,6 +186,22 @@ resource "azurerm_monitor_data_collection_rule" "graph_activity_dcr" {
   }
 }
 
+resource "azurerm_monitor_diagnostic_setting" "graph_activity_dcr_diagnostics" {
+  name = "dia-${azurerm_monitor_data_collection_rule.graph_activity_dcr.name}"
+  target_resource_id = azurerm_monitor_data_collection_rule.graph_activity_dcr.id
+
+  log_analytics_workspace_id = azurerm_log_analytics_workspace.law.workspace_id
+  log_analytics_destination_type = "Dedicated"
+
+  enabled_log {
+    category = "AuditEvent"
+  }
+
+  metric {
+    category = "AllMetrics"
+  }
+}
+
 resource "azurerm_monitor_data_collection_rule" "workspace_dcr" {
   name                = "dcr-workspace-${local.location_short}-001"
   location            = data.azurerm_resource_group.rg_log.location
@@ -192,6 +224,22 @@ resource "azurerm_monitor_data_collection_rule" "workspace_dcr" {
                   source
                   | where ServicePrincipalId != "57a2c1e0-6ad0-4b82-9bc5-608f503c3894"
     EOT
+  }
+}
+
+resource "azurerm_monitor_diagnostic_setting" "workspace_dcr_diagnostics" {
+  name = "dia-${azurerm_monitor_data_collection_rule.workspace_dcr.name}"
+  target_resource_id = azurerm_monitor_data_collection_rule.workspace_dcr.id
+
+  log_analytics_workspace_id = azurerm_log_analytics_workspace.law.workspace_id
+  log_analytics_destination_type = "Dedicated"
+
+  enabled_log {
+    category = "AuditEvent"
+  }
+
+  metric {
+    category = "AllMetrics"
   }
 }
 
