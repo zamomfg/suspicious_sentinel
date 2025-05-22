@@ -1,6 +1,6 @@
 
 resource "azurerm_storage_account" "archive_storage" {
-  name                     = "dls${var.app_name}${local.location_short}001"
+  name                     = "sa${var.app_name}${local.location_short}001"
   resource_group_name      = data.azurerm_resource_group.rg_log.name
   location                 = data.azurerm_resource_group.rg_log.location
 
