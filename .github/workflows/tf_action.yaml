@@ -60,7 +60,7 @@ jobs:
       #   run: terraform fmt
       - name: "removing stuff"
         id: remove
-        run: terrafrom state rm "azurerm_storage_account.archive_storage"
+        run: terraform state rm "azurerm_storage_account.archive_storage"
 
       - name: "Terraform Validate"
         id: validate
