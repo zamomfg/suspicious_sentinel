@@ -8,13 +8,16 @@ resource "azurerm_storage_account" "archive_storage" {
   account_replication_type = "LRS"
   
   allow_nested_items_to_be_public = false
+  shared_access_key_enabled       = false
+  default_to_oauth_authentication = true
+  local_user_enabled              = false
 
   is_hns_enabled = true
-  account_kind = "StorageV2"
+  account_kind   = "StorageV2"
 
   network_rules {
     default_action = "Deny"
-    bypass = ["AzureServices"]
+    bypass         = ["AzureServices"]
   }
 
   tags = var.tags
