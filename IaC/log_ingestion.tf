@@ -114,7 +114,7 @@ resource "azurerm_monitor_diagnostic_setting" "dcr_unifi_logs_diagnostics" {
   log_analytics_destination_type = "Dedicated"
 
   enabled_log {
-    category = "AuditEvent"
+    category_group = "allLogs"
   }
 
   metric {
@@ -194,7 +194,7 @@ resource "azurerm_monitor_diagnostic_setting" "graph_activity_dcr_diagnostics" {
   log_analytics_destination_type = "Dedicated"
 
   enabled_log {
-    category = "AuditEvent"
+    category_group = "allLogs"
   }
 
   metric {
@@ -235,7 +235,7 @@ resource "azurerm_monitor_diagnostic_setting" "workspace_dcr_diagnostics" {
   log_analytics_destination_type = "Dedicated"
 
   enabled_log {
-    category = "AuditEvent"
+    category_group = "allLogs"
   }
 
   metric {
