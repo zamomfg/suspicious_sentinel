@@ -15,10 +15,10 @@ resource "azurerm_storage_account" "archive_storage" {
   is_hns_enabled = true
   account_kind   = "StorageV2"
 
-  network_rules {
-    default_action = "Deny"
-    bypass         = ["AzureServices"]
-  }
+#   network_rules {
+#     default_action = "Deny"
+#     bypass         = ["AzureServices"]
+#   }
 
   tags = var.tags
 }
