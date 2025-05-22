@@ -29,7 +29,7 @@ resource "azurerm_role_assignment" "pipeline_permissions_archive_storage" {
   principal_id         = var.current_sp_id
 }
 
-resource "azurerm_storage_data_lake_gen2_filesystem" "archive_storage_filesystem" {
-  name               = "dlsfs-${var.app_name}-${local.location_short}-001"
-  storage_account_id = azurerm_storage_account.archive_storage.id
-}
+# resource "azurerm_storage_data_lake_gen2_filesystem" "archive_storage_filesystem" {
+#   name               = "dlsfs-${var.app_name}-${local.location_short}-001"
+#   storage_account_id = azurerm_storage_account.archive_storage.id
+# }
