@@ -53,7 +53,7 @@ resource "azurerm_monitor_data_collection_rule" "dcr_unifi_logs" {
     output_stream = local.unifi_firewall_stream_name
     transform_kql = <<-EOT
                   source
-                  | where Message matches regex @"^\[\S+?\]IN="
+                  | where Message matches regex @"^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\+\d{2}:\d{2})(.*)? \[\S+?\] DESCR"
                   | project TimeGenerated, Message
                   | parse kind=regex Message with @"\["  Rule: string "-" RuleNr: string "-" Action: string @"\]" _INTERFACE: string " MAC=" MAC: string " SRC=" SourceIP: string " DST=" DestIP: string " "
                   | parse _INTERFACE with "IN=" InterfaceIn " OUT=" InterfaceOut

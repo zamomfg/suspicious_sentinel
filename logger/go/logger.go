@@ -21,7 +21,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/monitor/ingestion/azlogs"
 )
 
-var LOG_TYPES = []string{"Custom", "Unifi"} // add syslog
+var LOG_TYPES = []string{"Custom", "Syslog"} // add syslog
 var HOSTNAME string
 
 type FlagStruct struct {
@@ -172,18 +172,17 @@ func log_to_format(format string, line string) []byte {
 		}
 	}
 
-	if format == "Unifi" {
+	if format == "Syslog" {
 
 		// this is based on the syntax of unifi logs, they are missing some parts of the syslog
 		// group 1: datetime, group 2: computer, group 3: facility, group 4: message
-		re := regexp.MustCompile("^(\\d{4}-\\d{2}-\\d{2}[T ].*?) (.*?) (.*?): (.*)")
+		re := regexp.MustCompile(`^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\+\d{2}:\d{2})`)
 		match := re.FindStringSubmatch(line)
 
 		logData = []map[string]string{
 			{
 				"TimeGenerated": match[1],
-				"Computer":      match[2],
-				"Message":       match[4],
+				"Message":       line,
 			},
 		}
 	}
