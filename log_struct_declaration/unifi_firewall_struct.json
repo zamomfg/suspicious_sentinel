@@ -5,6 +5,11 @@
         "description": "enter_description"
     },
     {
+        "name": "HostName",
+        "type": "string",
+        "description": "enter_description"
+    },
+    {
         "name": "Action",
         "type": "string",
         "description": "enter_description"
