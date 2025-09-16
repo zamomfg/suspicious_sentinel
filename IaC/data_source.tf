@@ -4,7 +4,7 @@ data "azurerm_resource_group" "rg_log" {
 }
 
 data "azurerm_arc_machine" "arc_log_machine" {
-  name = "log.server.local"
+  name = "log.server.home.arpa"
   resource_group_name = "rg-arc-prod-sc"
 }
 
