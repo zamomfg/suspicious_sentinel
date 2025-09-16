@@ -36,14 +36,14 @@ module "dcr_unifi" {
       name           = "source_unifi_syslog"
       facility_names = ["*"]
       log_levels     = ["*"]
-      streams        = ["${local.custom_stream_prefix}${module.table_unifi_firewall.name}", "${local.custom_stream_prefix}${module.table_unifi.name}"]
-      # streams        = ["Microsoft-Syslog"]
+    #   streams        = ["${local.custom_stream_prefix}${module.table_unifi_firewall.name}", "${local.custom_stream_prefix}${module.table_unifi.name}"]
+      streams        = ["Microsoft-Syslog"]
     }
   ]
 
   data_flows = [
     {
-      streams       = ["${local.custom_stream_prefix}${module.table_unifi.name}"]
+      streams       = ["Microsoft-Syslog"]
       destinations  = [azurerm_log_analytics_workspace.law.id]
       output_stream = "${local.custom_stream_prefix}${module.table_unifi.name}"
       #   transform_kql = <<-EOT
