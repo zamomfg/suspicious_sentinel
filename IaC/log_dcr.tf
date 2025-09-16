@@ -82,5 +82,5 @@ module "dcr_unifi" {
   ]
 
   logging_workspace_id = azurerm_log_analytics_workspace.law.id
-  vm_association_ids = [data.azurerm_arc_machine.arc_log_machine]
+  vm_association_ids = [data.azurerm_arc_machine.arc_log_machine.id]
 }
