@@ -6,7 +6,7 @@ locals {
 # module "dcr_workspace" {
 #   source = "./modules/dcr"
 
-#   name                = "dcr-workspace-${local.location_short}-01"
+#   name                = "dcr-workspace-${local.location_short}-001"
 #   resource_group_name = azurerm_resource_group.rg_log.name
 #   location            = azurerm_resource_group.rg_log.location
 #   tags                = var.tags
