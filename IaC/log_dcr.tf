@@ -31,7 +31,7 @@ module "dcr_unifi" {
 
   law_destinations_workspace_id = [azurerm_log_analytics_workspace.law.id]
 
-  data_sources = [
+  data_sources_syslog = [
     {
       syslog = {
         name           = "source_unifi_syslog"
