@@ -21,12 +21,12 @@ locals {
 #   logging_workspace_id = azurerm_log_analytics_workspace.law.id
 # }
 
-module "dcr_unifi_firewall" {
+module "dcr_unifi" {
   source = "./modules/dcr"
 
   name                = "dcr-unifi-${local.location_short}-001"
-  resource_group_name = azurerm_resource_group.rg_log.name
-  location            = azurerm_resource_group.rg_log.location
+  resource_group_name = data.azurerm_resource_group.rg_log.name
+  location            = data.azurerm_resource_group.rg_log.location
   tags                = var.tags
 
   law_destinations_workspace_id = [azurerm_log_analytics_workspace.law.id]

@@ -12,7 +12,7 @@ resource "random_string" "rand" {
 }
 
 resource "azurerm_storage_account" "sa_watchlist" {
-  resource_group_name = azurerm_resource_group.rg_log.name
+  resource_group_name = data.azurerm_resource_group.rg_log.name
   location            = var.location
 
   name = "stwawl${local.location_short}${random_string.rand.result}"
