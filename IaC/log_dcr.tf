@@ -94,3 +94,12 @@ module "dcr_unifi" {
   logging_workspace_id = azurerm_log_analytics_workspace.law.id
   vm_association_ids   = [data.azurerm_arc_machine.arc_log_machine.id]
 }
+
+resource "azurerm_virtual_machine_extension" "monitor_arc_log" {
+  name                 = "AzureMonitorLinuxAgent"
+  virtual_machine_id   = data.azurerm_arc_machine.arc_log_machine.id
+  publisher            = "Microsoft.Azure.Monitor"
+  type                 = "AzureMonitorLinuxAgent"
+  type_handler_version = "1.36"
+  auto_upgrade_minor_version = true
+}
