@@ -33,13 +33,11 @@ module "dcr_unifi" {
 
   data_sources_syslog = [
     {
-      syslog = {
-        name           = "source_unifi_syslog"
-        facility_names = ["*"]
-        log_levels     = ["*"]
-        streams        = ["${local.custom_stream_prefix}${module.table_unifi_firewall.name}", "${local.custom_stream_prefix}${module.table_unifi.name}"]
-        # streams        = ["Microsoft-Syslog"]
-      }
+      name           = "source_unifi_syslog"
+      facility_names = ["*"]
+      log_levels     = ["*"]
+      streams        = ["${local.custom_stream_prefix}${module.table_unifi_firewall.name}", "${local.custom_stream_prefix}${module.table_unifi.name}"]
+      # streams        = ["Microsoft-Syslog"]
     }
   ]
 
