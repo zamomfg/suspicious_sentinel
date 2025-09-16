@@ -43,7 +43,7 @@ module "dcr_unifi" {
 
   data_flows = [
     {
-      streams       = ["Microsoft-Syslog"]
+      streams       = ["${local.custom_stream_prefix}${module.table_unifi.name}"]
       destinations  = [azurerm_log_analytics_workspace.law.id]
       output_stream = "${local.custom_stream_prefix}${module.table_unifi.name}"
       #   transform_kql = <<-EOT
