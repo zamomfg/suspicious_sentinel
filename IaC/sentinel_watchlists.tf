@@ -34,6 +34,14 @@ resource "azurerm_storage_container" "container_watchlist" {
   container_access_type = "private"
 }
 
+data "azurerm_client_config" "current" {}
+
+resource "azurerm_role_assignment" "sa_watchlist_blob_contributor" {
+  scope                = azurerm_storage_container.container_watchlist.resource_manager_id
+  role_definition_name = "Storage Blob Data Contributor"
+  principal_id         = data.azurerm_client_config.current.object_id
+}
+
 module "test_watchlist" {
   source = "./modules/sentinel_watchlist"
 
