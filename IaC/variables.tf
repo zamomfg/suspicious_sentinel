@@ -20,7 +20,7 @@ variable "tags" {
 }
 
 variable "current_sp_id" {
-  type = string
+  type        = string
   description = "The id of the service principal running the cd/ci pipeline"
 }
 

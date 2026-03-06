@@ -1,14 +1,14 @@
 
 locals {
   custom_query_prefix = "ct_"
-  custom_func_prefix  = "ft_" 
+  custom_func_prefix  = "ft_"
 }
 
 resource "azurerm_log_analytics_query_pack" "query_pack" {
-    name                = "pack-queries-${local.location_short}-001"
-    resource_group_name = data.azurerm_resource_group.rg_log.name
-    location            = data.azurerm_resource_group.rg_log.location
-    tags                = var.tags
+  name                = "pack-queries-${local.location_short}-001"
+  resource_group_name = data.azurerm_resource_group.rg_log.name
+  location            = data.azurerm_resource_group.rg_log.location
+  tags                = var.tags
 }
 
 
