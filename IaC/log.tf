@@ -1,10 +1,4 @@
 
-# resource "azurerm_resource_group" "rg_log" {
-#   name     = "rg-${var.app_name}-${local.location_short}-001"
-#   location = var.location
-#   tags     = var.tags
-# }
-
 resource "azurerm_log_analytics_workspace" "law" {
   name                = "law-${var.app_name}-${local.location_short}-001"
   location            = data.azurerm_resource_group.rg_log.location
