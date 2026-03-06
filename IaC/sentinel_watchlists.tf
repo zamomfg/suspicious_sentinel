@@ -1,6 +1,6 @@
 
 locals {
-  watchlist_data_base_dir = "../watchlist_data"
+  watchlist_data_base_dir = "../watchlist_data/"
 }
 
 resource "random_string" "rand" {
