@@ -5,6 +5,7 @@ terraform.tfstate.*
 
 /test_data/*
 /watchlist_data/*
+!/watchlist_data/test_hosts.csv
 
 logger.conf
 var.env

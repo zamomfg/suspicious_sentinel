@@ -34,19 +34,19 @@ resource "azurerm_storage_container" "container_watchlist" {
   container_access_type = "private"
 }
 
-# module "test_watchlist" {
-#   source = "./modules/sentinel_watchlist"
+module "test_watchlist" {
+  source = "./modules/sentinel_watchlist"
 
-#   name = "Test watchlist module"
-#   alias = "wl-test-watchlist-module"
+  name = "Test watchlist module"
+  alias = "wl-test-watchlist-module"
   
-#   log_analytics_workspace_id = azurerm_log_analytics_workspace.law.id
-#   storage_account = azurerm_storage_account.sa_watchlist
-#   storage_container_name = azurerm_storage_container.container_watchlist.name
+  log_analytics_workspace_id = azurerm_log_analytics_workspace.law.id
+  storage_account = azurerm_storage_account.sa_watchlist
+  storage_container_name = azurerm_storage_container.container_watchlist.name
 
-#   file_name = "test_hosts.csv"
-#   file_path = "${local.watchlist_data_base_dir}test_hosts.csv"
+  file_name = "test_hosts.csv"
+  file_path = "${local.watchlist_data_base_dir}test_hosts.csv"
 
-#   itemsSearchKey = "Host"
+  itemsSearchKey = "Host"
 
-# }
+}
