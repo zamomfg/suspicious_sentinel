@@ -1,13 +1,13 @@
 
 locals {
   struct_declaration_path = "../log_struct_declaration/"
-  law_dest_name  = "dest-law-log"
+  table_postifx = "_CL"
 }
 
 module "table_unifi_firewall" {
   source = "./modules/law_table"
 
-  name = "UnifiFirewallLogs_CL"
+  name = "UnifiFirewallLogs${table_postifx}"
   law_workspace_id = azurerm_log_analytics_workspace.law.id
 
   retention_in_days = 90
@@ -18,7 +18,7 @@ module "table_unifi_firewall" {
 module "table_unifi" {
   source = "./modules/law_table"
 
-  name = "UnifiLogs_CL"
+  name = "UnifiLogs${table_postifx}"
   law_workspace_id = azurerm_log_analytics_workspace.law.id
 
   retention_in_days = 90
