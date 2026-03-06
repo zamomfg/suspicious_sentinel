@@ -7,7 +7,7 @@ locals {
 module "table_unifi_firewall" {
   source = "./modules/law_table"
 
-  name             = "UnifiFirewallLogs${table_postifx}"
+  name             = "UnifiFirewallLogs${local.table_postifx}"
   law_workspace_id = azurerm_log_analytics_workspace.law.id
 
   retention_in_days      = 90
@@ -18,7 +18,7 @@ module "table_unifi_firewall" {
 module "table_unifi" {
   source = "./modules/law_table"
 
-  name             = "UnifiLogs${table_postifx}"
+  name             = "UnifiLogs${local.table_postifx}"
   law_workspace_id = azurerm_log_analytics_workspace.law.id
 
   retention_in_days      = 90
