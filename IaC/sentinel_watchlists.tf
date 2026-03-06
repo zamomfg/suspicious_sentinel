@@ -35,7 +35,7 @@ resource "azurerm_storage_container" "container_watchlist" {
 }
 
 resource "azurerm_role_assignment" "sa_watchlist_blob_contributor" {
-  scope                = azurerm_storage_container.container_watchlist.resource_manager_id
+  scope                = azurerm_storage_container.container_watchlist.id
   role_definition_name = "Storage Blob Data Contributor"
   principal_id         = data.azurerm_client_config.current.object_id
 }
