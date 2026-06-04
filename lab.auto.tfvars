@@ -1,6 +1,6 @@
 
 # subscription_id set via workflow
-location        = "swedencentral"
+location        = "westeurope"
 app_name        = "log"
 tags            = {environment = "lab"}
 
