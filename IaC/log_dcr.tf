@@ -91,5 +91,5 @@ module "dcr_unifi" {
     }
   ]
 
-  logging_workspace_id = azurerm_log_analytics_workspace.law.id
+  # logging_workspace_id = azurerm_log_analytics_workspace.law.id
 }
