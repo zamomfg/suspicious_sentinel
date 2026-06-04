@@ -10,9 +10,9 @@ resource "azurerm_log_analytics_workspace" "law" {
 
   # data_collection_rule_id = data.azurerm_monitor_data_collection_rule.workspace_dcr.id
 
-  lifecycle {
-    prevent_destroy = true
-  }
+  # lifecycle {
+  #   prevent_destroy = true
+  # }
 }
 
 resource "azurerm_sentinel_log_analytics_workspace_onboarding" "sentinel" {
