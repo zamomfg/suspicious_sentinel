@@ -18,3 +18,45 @@ resource "azurerm_log_analytics_workspace" "law" {
 resource "azurerm_sentinel_log_analytics_workspace_onboarding" "sentinel" {
   workspace_id = azurerm_log_analytics_workspace.law.id
 }
+
+
+locals {
+  settings_api_version = "2025-06-01"
+}
+
+# resource "azapi_resource" "anomalies" {
+#   type      = "Microsoft.SecurityInsights/settings@${local.settings_api_version}"
+#   name      = "Anomalies"
+#   parent_id = azurerm_log_analytics_workspace.law.id
+#   body      = { kind = "Anomalies", properties = { isEnabled = true } }
+
+#   schema_validation_enabled = false
+# }
+
+# resource "azapi_resource" "entity_analytics" {
+#   type      = "Microsoft.SecurityInsights/settings@${local.settings_api_version}"
+#   name      = "EntityAnalytics"
+#   parent_id = azurerm_log_analytics_workspace.law.id
+#   body      = { kind = "EntityAnalytics", properties = { entityProviders = ["AzureActiveDirectory"] } }
+
+#   schema_validation_enabled = false
+# }
+
+# # resource "azapi_resource" "eyes_on" {
+# #   type      = "Microsoft.SecurityInsights/settings@${local.settings_api_version}"
+# #   name      = "EyesOn"
+# #   parent_id = azurerm_log_analytics_workspace.law.id
+# #   body      = { kind = "EyesOn", properties = { isEnabled = true } }
+# # }
+
+# resource "azapi_resource" "ueba" {
+#   type      = "Microsoft.SecurityInsights/settings@${local.settings_api_version}"
+#   name      = "Ueba"
+#   parent_id = azurerm_log_analytics_workspace.law.id
+#   body = {
+#     kind       = "Ueba"
+#     properties = { dataSources = ["AuditLogs", "AzureActivity", "SecurityEvent", "SigninLogs"] }
+#   }
+
+#   schema_validation_enabled = false
+# }

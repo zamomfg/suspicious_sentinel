@@ -1,26 +1,26 @@
 
+# module "ueba_essentials" {
+#   source = "./modules/content_hub"
 
-## Require P1 or P2 license to log signin logs. To log the other logs see the diagnostic settings
-# resource "azurerm_sentinel_data_connector_azure_active_directory" "connector_azure_ad" {
-#   name                       = "entra_id_connector"
-#   log_analytics_workspace_id = azurerm_sentinel_log_analytics_workspace_onboarding.sentinel.workspace_id
+#   log_analytics_workspace_id = azurerm_log_analytics_workspace.law.id
+#   api_version                = local.settings_api_version
+#   content_id                 = "azuresentinel.azure-sentinel-solution-uebaessentials"
+#   solution_version           = "3.0.6" # omit to track catalog latest; bump to update
+
+#   install = {
+#     workbooks       = true
+#     hunting_queries = true
+#   }
 # }
 
+module "azure_key_vault" {
+  source = "./modules/content_hub"
 
-# resource "azapi_resource" "sentinel_connector_security_center" {
-#   type = "Microsoft.SecurityInsights/dataConnectors@2023-02-01-preview"
-#   name = "string"
-#   parent_id = "string"
-#   // For remaining properties, see dataConnectors objects
-#   body = jsonencode({
-#     kind = "AzureSecurityCenter"
-#     properties = {
-#         dataTypes = {
-#         alerts = {
-#             state = "string"
-#         }
-#         }
-#         subscriptionId = "string"
-#     }
-#   })
-# }
+  log_analytics_workspace_id = azurerm_log_analytics_workspace.law.id
+  content_id                 = "azuresentinel.azure-sentinel-solution-azurekeyvault"
+  solution_version           = "3.0.2" # omit to track catalog latest; bump to update
+
+  install = {
+    analytics_rules = true
+  }
+}
