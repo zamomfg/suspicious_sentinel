@@ -27,8 +27,30 @@ variable "current_sp_id" {
 locals {
   location_short = lookup(
     {
-      swedencentral = "sc",
-      westeurope    = "weu"
+      westeurope         = "weu"
+      northeurope        = "neu"
+      eastus             = "eus"
+      eastus2            = "eus2"
+      westus             = "wus"
+      westus2            = "wus2"
+      westus3            = "wus3"
+      centralus          = "cus"
+      southcentralus     = "scus"
+      northcentralus     = "ncus"
+      uksouth            = "uks"
+      ukwest             = "ukw"
+      francecentral      = "frc"
+      germanywestcentral = "gwc"
+      switzerlandnorth   = "chn"
+      norwayeast         = "noe"
+      swedencentral      = "sec"
+      australiaeast      = "aue"
+      southeastasia      = "sea"
+      eastasia           = "ea"
+      japaneast          = "jpe"
+      centralindia       = "cin"
+      canadacentral      = "cac"
+      brazilsouth        = "brs"
     },
     var.location,
     "null"

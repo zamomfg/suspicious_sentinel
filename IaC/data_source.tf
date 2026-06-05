@@ -2,7 +2,7 @@
 data "azurerm_client_config" "current" {}
 
 data "azurerm_resource_group" "rg_log" {
-  name = "rg-log-weu-01"
+  name = "rg-log-neu-01"
 }
 
 # data "azurerm_monitor_data_collection_rule" "workspace_dcr" {
