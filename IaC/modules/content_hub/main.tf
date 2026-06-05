@@ -48,11 +48,12 @@ resource "azapi_resource" "solution" {
 
   body = {
     properties = {
-      contentId        = local.package.contentId
-      contentKind      = local.package.contentKind # "Solution"
-      contentProductId = local.package.contentProductId
-      displayName      = local.package.displayName
-      version          = local.solution_version
+      contentId            = local.package.contentId
+      contentKind          = local.package.contentKind # "Solution"
+      contentProductId     = local.package.contentProductId
+      contentSchemaVersion = local.package.contentSchemaVersion
+      displayName          = local.package.displayName
+      version              = local.solution_version
     }
   }
 
@@ -106,18 +107,19 @@ resource "azapi_resource" "content" {
 
   body = {
     properties = {
-      contentId        = each.value.contentId
-      contentKind      = each.value.contentKind
-      version          = each.value.version
-      displayName      = each.value.displayName
-      contentProductId = each.value.contentProductId
-      packageId        = each.value.packageId
-      packageKind      = try(each.value.packageKind, "Solution")
-      packageName      = try(each.value.packageName, local.package.displayName)
-      packageVersion   = local.solution_version
-      source           = each.value.source
-      author           = try(each.value.author, null)
-      support          = try(each.value.support, null)
+      contentId            = each.value.contentId
+      contentKind          = each.value.contentKind
+      version              = each.value.version
+      displayName          = each.value.displayName
+      contentProductId     = each.value.contentProductId
+      contentSchemaVersion = each.value.contentSchemaVersion
+      packageId            = each.value.packageId
+      packageKind          = try(each.value.packageKind, "Solution")
+      packageName          = try(each.value.packageName, local.package.displayName)
+      packageVersion       = local.solution_version
+      source               = each.value.source
+      author               = try(each.value.author, null)
+      support              = try(each.value.support, null)
       # contentProductTemplates exposes the ARM template as packagedContent
       # (per-item GET only); contentTemplates expects it under mainTemplate.
       mainTemplate = data.azapi_resource.template[each.key].output.properties.packagedContent
