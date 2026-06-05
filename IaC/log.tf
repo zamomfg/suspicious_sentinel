@@ -1,4 +1,8 @@
 
+locals {
+  settings_api_version = "2025-06-01"
+}
+
 resource "azurerm_log_analytics_workspace" "law" {
   name                = "law-${var.app_name}-${local.location_short}-001"
   location            = data.azurerm_resource_group.rg_log.location
@@ -10,18 +14,13 @@ resource "azurerm_log_analytics_workspace" "law" {
 
   # data_collection_rule_id = data.azurerm_monitor_data_collection_rule.workspace_dcr.id
 
-  # lifecycle {
-  #   prevent_destroy = true
-  # }
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 resource "azurerm_sentinel_log_analytics_workspace_onboarding" "sentinel" {
   workspace_id = azurerm_log_analytics_workspace.law.id
-}
-
-
-locals {
-  settings_api_version = "2025-06-01"
 }
 
 # resource "azapi_resource" "anomalies" {

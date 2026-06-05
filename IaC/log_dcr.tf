@@ -31,6 +31,8 @@ module "dcr_unifi" {
 
   law_destinations_workspace_id = [azurerm_log_analytics_workspace.law.id]
 
+  vm_association_ids = [ data.azurerm_arc_machine.home_lab_ama.id ]
+
   data_sources_syslog = [
     {
       name           = "source_unifi_syslog"
@@ -91,5 +93,5 @@ module "dcr_unifi" {
     }
   ]
 
-  # logging_workspace_id = azurerm_log_analytics_workspace.law.id
+  logging_workspace_id = azurerm_log_analytics_workspace.law.id
 }
