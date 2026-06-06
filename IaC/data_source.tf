@@ -7,7 +7,7 @@ data "azurerm_resource_group" "rg_log" {
 
 data "azurerm_arc_machine" "home_lab_ama" {
   resource_group_name = "rg-arc-prod-sc"
-  name                = "ubuntu-ama"
+  name                = "log-forwader"
 }
 
 # data "azurerm_monitor_data_collection_rule" "workspace_dcr" {
