@@ -21,20 +21,7 @@ locals {
 #   logging_workspace_id = azurerm_log_analytics_workspace.law.id
 # }
 
-# ---------------------------------------------------------------------------
 # Ubiquiti UniFi: per-category split.
-#
-# DCR transformations run per-record and cannot use `union`, tabular `let`
-# functions, or a named-table source — only `source`. So instead of one flow
-# that unions 22 categories into Ubiquiti_CL, each UniFi log category gets its
-# own data flow -> custom stream -> tailored _CL table, each with a small,
-# legal single-pipeline transform. The UbiquitiAuditEvent function
-# (law_queries.tf) unions these tables back together for the solution content.
-#
-# The per-category tables live in log_tables.tf (module.unifi_tables); their
-# schemas come from local.unifi_category_extra_columns there, which is also the
-# single source of truth the transform projection below uses for category columns.
-# ---------------------------------------------------------------------------
 locals {
   # Projection of the common columns (Message is the raw SyslogMessage).
   unifi_common_projection = "TimeGenerated,EventVendor,EventTime,Hostname,EventCategory,DvcType,DvcMacAddr,FirmwareVersion,EventMessage,Message"
@@ -78,7 +65,9 @@ locals {
     Hostapd = {
       filter  = "| where Message contains 'hostapd'"
       extends = <<-KQL
-        | extend EventCategory = 'hostapd', WlanId = extract(@'hostapd:\s(\w+)',1,Message), SrcType = extract(@':\s(\w+)\s[A-Fa-f0-9:]{17}',1,Message), SrcMacAddr = extract(@':\s(\w+)\s([A-Fa-f0-9:]{17})',2,Message), DstMacAddr = extract(@'addr=([a-fA-F0-9:]{17})',1,Message), Service = extract(@'[A-Fa-f0-9:]{17}\s(.+):',2,Message), EventMessage = extract(@'[A-Fa-f0-9:]{17}\s(.*):\s(.*)',2,Message)
+        | extend EventCategory = 'hostapd', WlanId = extract(@'hostapd:\s(\w+)',1,Message), SrcType = extract(@':\s(\w+)\s[A-Fa-f0-9:]{17}',1,Message), SrcMacAddr = extract(@':\s(\w+)\s([A-Fa-f0-9:]{17})',2,Message), DstMacAddr = extract(@'addr=([a-fA-F0-9:]{17})',1,Message), EventMessage = extract(@'[A-Fa-f0-9:]{17}\s(.*):\s(.*)',2,Message)
+        // Regex fix vs the official UbiquitiAuditEvent parser: it extracts capture group 2 from a single-group regex (always empty); group 1 actually returns the service.
+        | extend Service = extract(@'[A-Fa-f0-9:]{17}\s(.+):',1,Message)
       KQL
     }
 
@@ -122,8 +111,8 @@ locals {
         | extend DstIpAddr = iif(EventCategory == 'coredns', extract(@'"dst_ip":"([^"]+)"',1,EventMessage), '')
         | extend DstPortNumber = iif(EventCategory == 'coredns', extract(@'"dst_port":(\d+)',1,EventMessage), '')
         | extend NetworkProtocol = iif(EventCategory == 'coredns', extract(@'"protocol":"([^"]+)"',1,EventMessage), '')
-        | extend SrcMacAddr = case(EventCategory == 'dnsmasq', extract(@'MAC=[A-Fa-F0-9:]{17}:([A-Fa-F0-9:]{17})\s',1,Message), EventCategory == 'coredns', extract(@'"mac":"([^"]+)"',1,EventMessage), '')
-        | extend DstMacAddr = case(EventCategory == 'dnsmasq', extract(@'MAC=([A-Fa-F0-9:]{17}):',1,Message), EventCategory == 'coredns', extract(@'"mac":"([^"]+)"',1,EventMessage), '')
+        | extend SrcMacAddr = case(EventCategory == 'dnsmasq', extract(@'MAC=[a-fA-F0-9:]{17}:([a-fA-F0-9:]{17})\s',1,Message), EventCategory == 'coredns', extract(@'"mac":"([^"]+)"',1,EventMessage), '')
+        | extend DstMacAddr = case(EventCategory == 'dnsmasq', extract(@'MAC=([a-fA-F0-9:]{17}):',1,Message), EventCategory == 'coredns', extract(@'"mac":"([^"]+)"',1,EventMessage), '')
       KQL
     }
 
@@ -195,11 +184,6 @@ locals {
       KQL
     }
 
-
-
-
-
-
     Vpn = {
       filter  = "| where Message contains \"CEF:\" and (Message has \"VPN Client Connected\" or Message has \"VPN Client Disconnected\")"
       extends = <<-KQL
@@ -257,7 +241,6 @@ locals {
       KQL
     }
 
-
     WiredClient = {
       filter  = "| where Message contains \"CEF:\" and ( Message has \"Wired Client Connected\" or Message has \"Wired Client Disconnected\" )"
       extends = <<-KQL
@@ -281,9 +264,6 @@ locals {
         | extend WiredUtcTime = extract(@'UNIFIutcTime=([^\s]+)',1,Message)
       KQL
     }
-
-
-
   }
 }
 
@@ -308,8 +288,6 @@ module "dcr_unifi" {
     }
   ]
 
-  # One data flow per category: same Microsoft-Syslog input, category-specific
-  # transform, routed to that category's custom stream / table.
   data_flows = [
     for k, c in local.unifi_categories : {
       streams       = ["Microsoft-Syslog"]
