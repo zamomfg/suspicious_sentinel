@@ -48,3 +48,18 @@ module "ubiquiti_unifi" {
     parsers         = false # ours wins; see UbiquitiAuditEvent aggregator
   }
 }
+
+module "soc_handbook" {
+  source = "./modules/content_hub"
+
+  log_analytics_workspace_id = azurerm_log_analytics_workspace.law.id
+  resource_group_name        = data.azurerm_resource_group.rg_log.name
+  workspace_name             = azurerm_log_analytics_workspace.law.name
+  location                   = data.azurerm_resource_group.rg_log.location
+  content_id                 = "microsoftsentinelcommunity.azure-sentinel-solution-sochandbook"
+  solution_version           = "3.0.6"
+
+  install = {
+    workbooks = true
+  }
+}
