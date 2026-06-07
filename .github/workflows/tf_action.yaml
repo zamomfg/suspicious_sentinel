@@ -14,10 +14,12 @@ permissions:
   contents: read
 
 env:
-  ARM_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
-  ARM_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
-  ARM_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
-  TF_VAR_current_sp_id: ${{ vars.AZURE_CLIENT_ID }} # Used for getting the id of the current SP
+  ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+  ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+  ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+  TF_VAR_current_sp_id: ${{ secrets.AZURE_CLIENT_ID }} # Used for getting the id of the current SP
+  TF_VAR_maxmind_account_id: ${{ secrets.MAXMIND_ACCOUNT_ID }} # MaxMind account ID (add as a repo/environment secret)
+  TF_VAR_maxmind_license_key: ${{ secrets.MAXMIND_LICENSE_KEY }} # MaxMind GeoLite2 license key (add as a repo/environment secret)
   TF_LOG: ${{ vars.DEBUG_LEVEL }}
 
 jobs:
@@ -37,9 +39,9 @@ jobs:
       - name: "Az CLI login"
         uses: azure/login@v1
         with:
-          client-id: ${{vars.AZURE_CLIENT_ID}}
-          tenant-id: ${{vars.AZURE_TENANT_ID}}
-          subscription-id: ${{vars.AZURE_SUBSCRIPTION_ID}}
+          client-id: ${{secrets.AZURE_CLIENT_ID}}
+          tenant-id: ${{secrets.AZURE_TENANT_ID}}
+          subscription-id: ${{secrets.AZURE_SUBSCRIPTION_ID}}
 
       - name: "Az account"
         run: az account show
@@ -53,9 +55,9 @@ jobs:
       - name: "Terraform Init"
         id: init
         env:
-          STORAGE_ACCOUNT: ${{ vars.STATE_STORAGE_ACCOUNT_NAME }}
-          CONTAINER_NAME: ${{ vars.STATE_CONTAINER_NAME }}
-          RESOURCE_GROUP_NAME: ${{ vars.STATE_RESOURCE_GROUP_NAME }}
+          STORAGE_ACCOUNT: ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
+          CONTAINER_NAME: ${{ secrets.STATE_CONTAINER_NAME }}
+          RESOURCE_GROUP_NAME: ${{ secrets.STATE_RESOURCE_GROUP_NAME }}
         run: terraform init -upgrade -backend-config="storage_account_name=$STORAGE_ACCOUNT" -backend-config="container_name=$CONTAINER_NAME" -backend-config="resource_group_name=$RESOURCE_GROUP_NAME"
 
       # - name: "Terraform Format"
@@ -69,9 +71,9 @@ jobs:
       - name: "Terraform Plan"
         id: plan
         if: github.event_name == 'pull_request'
-        run: terraform plan -no-color -lock-timeout=30s -var-file ../lab.auto.tfvars -var="subscription_id=${{ vars.AZURE_SUBSCRIPTION_ID }}"
+        run: terraform plan -no-color -lock-timeout=30s -var-file ../lab.auto.tfvars -var="subscription_id=${{ secrets.AZURE_SUBSCRIPTION_ID }}"
 
       - name: "Terraform Apply"
         id: apply
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        run: terraform apply -auto-approve -lock-timeout=30s -var-file ../lab.auto.tfvars -var="subscription_id=${{ vars.AZURE_SUBSCRIPTION_ID }}"
+        run: terraform apply -auto-approve -lock-timeout=30s -var-file ../lab.auto.tfvars -var="subscription_id=${{ secrets.AZURE_SUBSCRIPTION_ID }}"

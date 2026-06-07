@@ -1,0 +1,32 @@
+{
+  "bindings": [
+    {
+      "name": "Timer",
+      "type": "timerTrigger",
+      "direction": "in",
+      "schedule": "%AsnSchedule%"
+    },
+    {
+      "name": "lastModifiedState",
+      "type": "blob",
+      "direction": "in",
+      "path": "asn-data/.maxmind-last-modified",
+      "connection": "AzureWebJobsStorage",
+      "dataType": "string"
+    },
+    {
+      "name": "outputBlob",
+      "type": "blob",
+      "direction": "out",
+      "path": "asn-data/GeoLite2-ASN-Blocks-IPv4.csv",
+      "connection": "AzureWebJobsStorage"
+    },
+    {
+      "name": "lastModifiedStateOut",
+      "type": "blob",
+      "direction": "out",
+      "path": "asn-data/.maxmind-last-modified",
+      "connection": "AzureWebJobsStorage"
+    }
+  ]
+}

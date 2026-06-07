@@ -2,6 +2,7 @@
 .terraform
 terraform.tfstate.*
 .terraform.lock.hcl
+IaC/.build/
 
 /test_data/*
 /watchlist_data/*
