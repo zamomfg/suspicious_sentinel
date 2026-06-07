@@ -13,23 +13,20 @@
 #   }
 # }
 
-# Temporarily disabled to clean-destroy old-approach content before re-enabling
-# on the ARM-deployment-based module (avoids a destroy/create race on the same
-# contentTemplates resources).
-# module "azure_key_vault" {
-#   source = "./modules/content_hub"
+module "azure_key_vault" {
+  source = "./modules/content_hub"
 
-#   log_analytics_workspace_id = azurerm_log_analytics_workspace.law.id
-#   resource_group_name        = data.azurerm_resource_group.rg_log.name
-#   workspace_name             = azurerm_log_analytics_workspace.law.name
-#   location                   = data.azurerm_resource_group.rg_log.location
-#   content_id                 = "azuresentinel.azure-sentinel-solution-azurekeyvault"
-#   solution_version           = "3.0.2" # omit to track catalog latest; bump to update
+  log_analytics_workspace_id = azurerm_log_analytics_workspace.law.id
+  resource_group_name        = data.azurerm_resource_group.rg_log.name
+  workspace_name             = azurerm_log_analytics_workspace.law.name
+  location                   = data.azurerm_resource_group.rg_log.location
+  content_id                 = "azuresentinel.azure-sentinel-solution-azurekeyvault"
+  solution_version           = "3.0.2" # omit to track catalog latest; bump to update
 
-#   install = {
-#     analytics_rules = true
-#   }
-# }
+  install = {
+    analytics_rules = true
+  }
+}
 
 # Ubiquiti UniFi. Disabled while the content_hub install is reworked to deploy
 # packagedContent as an ARM template (fixes the portal "metadata.properties is
