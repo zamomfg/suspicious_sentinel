@@ -68,6 +68,11 @@ variable "data_flows" {
   }))
 
   validation {
+    condition     = length(var.data_flows) <= 20
+    error_message = "A data collection rule supports at most 20 data flows; got ${length(var.data_flows)}. Split the categories across multiple DCRs or merge some."
+  }
+
+  validation {
     condition = alltrue([
       for df in var.data_flows : length(coalesce(df.transform_kql, "")) <= 15360
     ])

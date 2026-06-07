@@ -18,28 +18,21 @@ locals {
   # from the same map. Every column here must be produced by the category's
   # `extends` in local.unifi_categories.
   unifi_category_extra_columns = {
-    Dropbear         = [for n in ["SrcIpAddr", "SrcPortNumber"] : { name = n, type = "string" }]
-    Hostapd          = [for n in ["WlanId", "SrcType", "SrcMacAddr", "DstMacAddr", "Service"] : { name = n, type = "string" }]
-    Firewall         = [for n in ["FlowId", "DvcInboundInterface", "DvcOutboundInterface", "DvcAction", "NetworkRuleName", "DstMacAddr", "SrcMacAddr", "SrcIpAddr", "SrcPortNumber", "DstIpAddr", "DstPortNumber", "NetworkBytes", "Tos", "Prec", "Ttl", "NetworkProtocol", "Window", "Res", "Mark"] : { name = n, type = "string" }]
-    DnsTimeout       = [for n in ["SrcType", "DnsQuery", "DnsServer"] : { name = n, type = "string" }]
-    Stahtd           = [for n in ["SrcDvcMacAddr", "WlanId", "AssocStatus", "EventResult"] : { name = n, type = "string" }]
-    AssocTracker     = [for n in ["WlanId", "SrcMacAddr", "EventResult"] : { name = n, type = "string" }]
-    StaEvent         = [for n in ["WlanId", "DvcAction", "SrcMacAddr", "SrcIpAddr"] : { name = n, type = "string" }]
-    Syswrapper       = []
-    Logread          = [for n in ["DstIpAddr", "DstPortNumber"] : { name = n, type = "string" }]
-    Stamgr           = [for n in ["DstMacAddr", "WlanId", "EventResultDetails"] : { name = n, type = "string" }]
-    Kernel           = []
-    Dnsmasq          = [for n in ["DstMacAddr", "SrcMacAddr", "DnsQuery", "SrcIpAddr"] : { name = n, type = "string" }]
-    Mcad             = []
-    UnifiMqBroker    = []
-    UbiosUdapiServer = []
-    Vpn              = [for n in ["VpnUser", "VpnClientIp", "VpnSourceIp", "VpnName", "VpnType", "VpnServerAddress", "VpnSubnet", "VpnWan", "VpnUtcTime", "VpnDuration", "VpnUsageDown", "VpnUsageUp"] : { name = n, type = "string" }]
-    WifiClient       = [for n in ["WifiClientAlias", "WifiClientHostname", "WifiClientIp", "WifiClientMac", "WifiChannel", "WifiChannelWidth", "WifiName", "WifiBand", "WifiAuthMethod", "WifiRssi", "WifiLastDeviceName", "WifiLastDeviceIp", "WifiLastDeviceMac", "WifiLastDeviceModel", "WifiConnectedDeviceName", "WifiConnectedDeviceIp", "WifiConnectedDeviceMac", "WifiConnectedDeviceModel", "WifiDuration", "WifiUsageDown", "WifiUsageUp", "WifiNetworkName", "WifiNetworkSubnet", "WifiNetworkVlan", "WifiUtcTime", "WifiLastConnectedToWiFiChannel", "WifiLastConnectedToWiFiChannelWidth", "WifiLastConnectedToWiFiBand", "WifiLastConnectedToWiFiRssi"] : { name = n, type = "string" }]
-    Wevent           = []
-    WiredClient      = [for n in ["WiredClientAlias", "WiredClientHostname", "WiredClientIp", "WiredClientMac", "WiredConnectedDeviceName", "WiredConnectedDevicePort", "WiredConnectedDeviceIp", "WiredConnectedDeviceMac", "WiredLinkSpeed", "WiredDuration", "WiredUsageDown", "WiredUsageUp", "WiredNetworkName", "WiredNetworkSubnet", "WiredNetworkVlan", "WiredUtcTime"] : { name = n, type = "string" }]
-    Earlyoom         = []
-    DpiFlowStats     = []
-    Coredns          = [for n in ["DnsQuery", "SrcIpAddr", "SrcPortNumber", "DstIpAddr", "DstPortNumber", "NetworkProtocol", "DstMacAddr", "SrcMacAddr"] : { name = n, type = "string" }]
+    Dropbear     = [for n in ["SrcIpAddr", "SrcPortNumber"] : { name = n, type = "string" }]
+    Hostapd      = [for n in ["WlanId", "SrcType", "SrcMacAddr", "DstMacAddr", "Service"] : { name = n, type = "string" }]
+    Firewall     = [for n in ["FlowId", "DvcInboundInterface", "DvcOutboundInterface", "DvcAction", "NetworkRuleName", "DstMacAddr", "SrcMacAddr", "SrcIpAddr", "SrcPortNumber", "DstIpAddr", "DstPortNumber", "NetworkBytes", "Tos", "Prec", "Ttl", "NetworkProtocol", "Window", "Res", "Mark"] : { name = n, type = "string" }]
+    Stahtd       = [for n in ["SrcDvcMacAddr", "WlanId", "AssocStatus", "EventResult"] : { name = n, type = "string" }]
+    AssocTracker = [for n in ["WlanId", "SrcMacAddr", "EventResult"] : { name = n, type = "string" }]
+    StaEvent     = [for n in ["WlanId", "DvcAction", "SrcMacAddr", "SrcIpAddr"] : { name = n, type = "string" }]
+    Logread      = [for n in ["DstIpAddr", "DstPortNumber"] : { name = n, type = "string" }]
+    Stamgr       = [for n in ["DstMacAddr", "WlanId", "EventResultDetails"] : { name = n, type = "string" }]
+    Vpn          = [for n in ["VpnUser", "VpnClientIp", "VpnSourceIp", "VpnName", "VpnType", "VpnServerAddress", "VpnSubnet", "VpnWan", "VpnUtcTime", "VpnDuration", "VpnUsageDown", "VpnUsageUp"] : { name = n, type = "string" }]
+    WifiClient   = [for n in ["WifiClientAlias", "WifiClientHostname", "WifiClientIp", "WifiClientMac", "WifiChannel", "WifiChannelWidth", "WifiName", "WifiBand", "WifiAuthMethod", "WifiRssi", "WifiLastDeviceName", "WifiLastDeviceIp", "WifiLastDeviceMac", "WifiLastDeviceModel", "WifiConnectedDeviceName", "WifiConnectedDeviceIp", "WifiConnectedDeviceMac", "WifiConnectedDeviceModel", "WifiDuration", "WifiUsageDown", "WifiUsageUp", "WifiNetworkName", "WifiNetworkSubnet", "WifiNetworkVlan", "WifiUtcTime", "WifiLastConnectedToWiFiChannel", "WifiLastConnectedToWiFiChannelWidth", "WifiLastConnectedToWiFiBand", "WifiLastConnectedToWiFiRssi"] : { name = n, type = "string" }]
+    WiredClient  = [for n in ["WiredClientAlias", "WiredClientHostname", "WiredClientIp", "WiredClientMac", "WiredConnectedDeviceName", "WiredConnectedDevicePort", "WiredConnectedDeviceIp", "WiredConnectedDeviceMac", "WiredLinkSpeed", "WiredDuration", "WiredUsageDown", "WiredUsageUp", "WiredNetworkName", "WiredNetworkSubnet", "WiredNetworkVlan", "WiredUtcTime"] : { name = n, type = "string" }]
+
+    # Merged tables (multiple EventCategory values share one schema).
+    System = []
+    Dns    = [for n in ["SrcType", "DnsQuery", "DnsServer", "SrcIpAddr", "SrcPortNumber", "DstIpAddr", "DstPortNumber", "NetworkProtocol", "SrcMacAddr", "DstMacAddr"] : { name = n, type = "string" }]
   }
 }
 

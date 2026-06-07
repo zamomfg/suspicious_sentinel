@@ -105,15 +105,25 @@ locals {
       KQL
     }
 
-    DnsTimeout = {
-      filter  = "| where Message contains \"DNS request timed out\""
+    # DNS events from three sources (dnstimeout, dnsmasq, coredns) share one
+    # table; EventCategory distinguishes them and each field is extracted per
+    # subtype. coredns fields come from the parsed JSON in EventMessage.
+    Dns = {
+      filter  = "| where Message contains \"DNS request timed out\" or Message matches regex @'dnsmasq(-dhcp)?\\[\\d+\\]:' or Message contains 'coredns['"
       extends = <<-KQL
-        | extend EventCategory = 'dnstimeout'
-        | extend EventMessage = 'DNS request timed out'
-        | extend SrcType = extract(@'\[(\w+):\s[a-fA-F0-9:]{17}\]',1,Message)
-        | extend DvcMacAddr = extract(@'\[\w+:\s([a-fA-F0-9:]{17})\]',1,Message)
-        | extend DnsQuery = extract(@'QUERY:(.*?)\]',1,Message)
-        | extend DnsServer = extract(@'DNS_SERVER\s?:(.*?)\]',1,Message)
+        | extend EventCategory = case(Message contains "DNS request timed out", 'dnstimeout', Message matches regex @'dnsmasq(-dhcp)?\[\d+\]:', 'dnsmasq', Message contains 'coredns[', 'coredns', '')
+        | extend EventMessage = case(EventCategory == 'dnstimeout', 'DNS request timed out', EventCategory == 'coredns', extract(@'coredns\[\d+\]:\s*(\{.*\})',1,Message), '')
+        | extend DvcMacAddr = iif(EventCategory == 'dnstimeout', extract(@'\[\w+:\s([a-fA-F0-9:]{17})\]',1,Message), DvcMacAddr)
+        | extend SrcType = iif(EventCategory == 'dnstimeout', extract(@'\[(\w+):\s[a-fA-F0-9:]{17}\]',1,Message), '')
+        | extend DnsQuery = case(EventCategory == 'dnstimeout', extract(@'QUERY:(.*?)\]',1,Message), EventCategory == 'dnsmasq', extract(@'dnsmasq(-dhcp)?\[\d+\]:\s(.*?)\[\w+\]|\s(\S+)\sfrom\s\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}',3,Message), EventCategory == 'coredns', extract(@'"domain":"([^"]+)"',1,EventMessage), '')
+        | extend DnsServer = iif(EventCategory == 'dnstimeout', extract(@'DNS_SERVER\s?:(.*?)\]',1,Message), '')
+        | extend SrcIpAddr = case(EventCategory == 'dnsmasq', extract(@'dnsmasq(-dhcp)?\[\d+\]:\s(.*?)\[\w+\]|\s(.*?)from\s(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})',4,Message), EventCategory == 'coredns', extract(@'"src_ip":"([^"]+)"',1,EventMessage), '')
+        | extend SrcPortNumber = iif(EventCategory == 'coredns', extract(@'"src_port":(\d+)',1,EventMessage), '')
+        | extend DstIpAddr = iif(EventCategory == 'coredns', extract(@'"dst_ip":"([^"]+)"',1,EventMessage), '')
+        | extend DstPortNumber = iif(EventCategory == 'coredns', extract(@'"dst_port":(\d+)',1,EventMessage), '')
+        | extend NetworkProtocol = iif(EventCategory == 'coredns', extract(@'"protocol":"([^"]+)"',1,EventMessage), '')
+        | extend SrcMacAddr = case(EventCategory == 'dnsmasq', extract(@'MAC=[A-Fa-F0-9:]{17}:([A-Fa-F0-9:]{17})\s',1,Message), EventCategory == 'coredns', extract(@'"mac":"([^"]+)"',1,EventMessage), '')
+        | extend DstMacAddr = case(EventCategory == 'dnsmasq', extract(@'MAC=([A-Fa-F0-9:]{17}):',1,Message), EventCategory == 'coredns', extract(@'"mac":"([^"]+)"',1,EventMessage), '')
       KQL
     }
 
@@ -152,11 +162,15 @@ locals {
       KQL
     }
 
-    Syswrapper = {
-      filter  = "| where Message contains 'syswrapper'"
+    # Low-value system/noise processes that carry no fields beyond EventMessage
+    # all share one table; EventCategory distinguishes the source process.
+    System = {
+      filter  = <<-KQL
+        | where Message contains 'syswrapper' or (Message contains 'kernel' and (Message contains 'FWLOG' or Message contains 'FW LOG' or Message contains 'set_ratelimit')) or Message contains 'mcad[' or Message contains 'unifi-mq-broker[' or Message contains 'ubios-udapi-server[' or Message contains 'wevent[' or Message contains 'earlyoom[' or Message contains 'dpi-flow-stats['
+      KQL
       extends = <<-KQL
-        | extend EventCategory = 'syswrapper'
-        | extend EventMessage = extract(@'syswrapper:\s(.*)',1,Message)
+        | extend EventCategory = case(Message contains 'syswrapper', 'syswrapper', Message contains 'kernel', 'kernel', Message contains 'mcad[', 'mcad', Message contains 'unifi-mq-broker[', 'unifi-mq-broker', Message contains 'ubios-udapi-server[', 'ubios-udapi-server', Message contains 'wevent[', 'wevent', Message contains 'earlyoom[', 'earlyoom', Message contains 'dpi-flow-stats[', 'dpi-flow-stats', '')
+        | extend EventMessage = case(EventCategory == 'syswrapper', extract(@'syswrapper:\s(.*)',1,Message), EventCategory == 'kernel', case(Message matches regex "kernel.*FW LOG",extract(@'FW LOG,\s*(.*)',1,Message),Message matches regex "kernel.*FWLOG",extract(@'FWLOG:\s*\[\d+\]\s*(.*)',1,Message),Message matches regex "kernel.*_set_ratelimit",extract(@'_set_ratelimit:\s*(.*)',1,Message),"Check raw_message for details"), EventCategory == 'mcad', extract(@'mcad\[\d+\]:\s(.*)',1,Message), EventCategory == 'unifi-mq-broker', extract(@'unifi-mq-broker\[\d+\]:\s(.*)',1,Message), EventCategory == 'ubios-udapi-server', extract(@'ubios-udapi-server\[\d+\]:\s(.*)',1,Message), EventCategory == 'wevent', extract(@'wevent\[\d+\]:\s*(.*)',1,Message), EventCategory == 'earlyoom', extract(@'earlyoom\[\d+\]:\s*(.*)',1,Message), EventCategory == 'dpi-flow-stats', extract(@'dpi-flow-stats\[\d+\]:\s*(.*)',1,Message), '')
       KQL
     }
 
@@ -181,51 +195,10 @@ locals {
       KQL
     }
 
-    Kernel = {
-      filter  = <<-KQL
-        | where Message contains 'kernel'
-        | where Message contains 'FWLOG' or Message contains 'FW LOG' or Message contains 'set_ratelimit'
-      KQL
-      extends = <<-KQL
-        | extend EventCategory = 'kernel'
-        | extend EventMessage = case( Message matches regex "kernel.*FW LOG",extract(@'FW LOG,\s*(.*)',1,Message),Message matches regex "kernel.*FWLOG",extract(@'FWLOG:\s*\[\d+\]\s*(.*)',1,Message),Message matches regex "kernel.*_set_ratelimit",extract(@'_set_ratelimit:\s*(.*)',1,Message), "Check raw_message for details")
-      KQL
-    }
 
-    Dnsmasq = {
-      filter  = "| where Message matches regex @'dnsmasq(-dhcp)?\\[\\d+\\]:'"
-      extends = <<-KQL
-        | extend EventCategory = 'dnsmasq'
-        | extend DstMacAddr = extract(@'MAC=([A-Fa-F0-9:]{17}):',1,Message)
-        | extend SrcMacAddr = extract(@'MAC=[A-Fa-F0-9:]{17}:([A-Fa-F0-9:]{17})\s',1,Message)
-        | extend DnsQuery = extract(@'dnsmasq(-dhcp)?\[\d+\]:\s(.*?)\[\w+\]|\s(\S+)\sfrom\s\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}',3,Message)
-        | extend SrcIpAddr = extract(@'dnsmasq(-dhcp)?\[\d+\]:\s(.*?)\[\w+\]|\s(.*?)from\s(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})',4,Message)
-      KQL
-    }
 
-    Mcad = {
-      filter  = "| where Message contains 'mcad['"
-      extends = <<-KQL
-        | extend EventCategory = 'mcad'
-        | extend EventMessage = extract(@'mcad\[\d+\]:\s(.*)',1,Message)
-      KQL
-    }
 
-    UnifiMqBroker = {
-      filter  = "| where Message contains 'unifi-mq-broker['"
-      extends = <<-KQL
-        | extend EventCategory = 'unifi-mq-broker'
-        | extend EventMessage = extract(@'unifi-mq-broker\[\d+\]:\s(.*)',1,Message)
-      KQL
-    }
 
-    UbiosUdapiServer = {
-      filter  = "| where Message contains 'ubios-udapi-server['"
-      extends = <<-KQL
-        | extend EventCategory = 'ubios-udapi-server'
-        | extend EventMessage = extract(@'ubios-udapi-server\[\d+\]:\s(.*)',1,Message)
-      KQL
-    }
 
     Vpn = {
       filter  = "| where Message contains \"CEF:\" and (Message has \"VPN Client Connected\" or Message has \"VPN Client Disconnected\")"
@@ -284,13 +257,6 @@ locals {
       KQL
     }
 
-    Wevent = {
-      filter  = "| where Message contains 'wevent['"
-      extends = <<-KQL
-        | extend EventCategory = 'wevent'
-        | extend EventMessage = extract(@'wevent\[\d+\]:\s*(.*)',1,Message)
-      KQL
-    }
 
     WiredClient = {
       filter  = "| where Message contains \"CEF:\" and ( Message has \"Wired Client Connected\" or Message has \"Wired Client Disconnected\" )"
@@ -316,37 +282,8 @@ locals {
       KQL
     }
 
-    Earlyoom = {
-      filter  = "| where Message contains 'earlyoom['"
-      extends = <<-KQL
-        | extend EventCategory = 'earlyoom'
-        | extend EventMessage = extract(@'earlyoom\[\d+\]:\s*(.*)',1,Message)
-      KQL
-    }
 
-    DpiFlowStats = {
-      filter  = "| where Message contains 'dpi-flow-stats['"
-      extends = <<-KQL
-        | extend EventCategory = 'dpi-flow-stats'
-        | extend EventMessage = extract(@'dpi-flow-stats\[\d+\]:\s*(.*)',1,Message)
-      KQL
-    }
 
-    Coredns = {
-      filter  = "| where Message contains 'coredns['"
-      extends = <<-KQL
-        | extend EventCategory = 'coredns'
-        | extend EventMessage = extract(@'coredns\[\d+\]:\s*(\{.*\})',1,Message)
-        | extend DnsQuery = extract(@'"domain":"([^"]+)"',1,EventMessage)
-        | extend SrcIpAddr = extract(@'"src_ip":"([^"]+)"',1,EventMessage)
-        | extend SrcPortNumber = extract(@'"src_port":(\d+)',1,EventMessage)
-        | extend DstIpAddr = extract(@'"dst_ip":"([^"]+)"',1,EventMessage)
-        | extend DstPortNumber = extract(@'"dst_port":(\d+)',1,EventMessage)
-        | extend NetworkProtocol = extract(@'"protocol":"([^"]+)"',1,EventMessage)
-        | extend DstMacAddr = extract(@'"mac":"([^"]+)"',1,EventMessage)
-        | extend SrcMacAddr = extract(@'"mac":"([^"]+)"',1,EventMessage)
-      KQL
-    }
   }
 }
 
