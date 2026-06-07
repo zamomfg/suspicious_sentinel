@@ -177,6 +177,15 @@ locals {
   asn_blob_sas_url = "https://${azurerm_storage_account.asn.name}.blob.core.windows.net/${azurerm_storage_container.asn_data.name}/${local.asn_blob_name}${data.azurerm_storage_account_blob_container_sas.asn_data_read.sas}"
 }
 
+resource "azurerm_application_insights" "asn" {
+  name                = "appi-asn-${local.location_short}-001"
+  resource_group_name = data.azurerm_resource_group.rg_log.name
+  location            = data.azurerm_resource_group.rg_log.location
+  workspace_id        = azurerm_log_analytics_workspace.law.id
+  application_type    = "web"
+  tags                = var.tags
+}
+
 resource "azurerm_windows_function_app" "asn" {
   name                       = "func-asn-${local.location_short}-${random_string.asn_suffix.result}"
   resource_group_name        = data.azurerm_resource_group.rg_log.name
@@ -197,9 +206,10 @@ resource "azurerm_windows_function_app" "asn" {
   }
 
   app_settings = {
-    "WEBSITE_RUN_FROM_PACKAGE" = local.asn_pkg_url
-    "MAXMIND_ACCOUNT_ID"       = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.maxmind_account.versionless_id})"
-    "MAXMIND_LICENSE_KEY"      = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.maxmind.versionless_id})"
-    "AsnSchedule"              = var.asn_refresh_cron
+    "APPLICATIONINSIGHTS_CONNECTION_STRING" = azurerm_application_insights.asn.connection_string
+    "WEBSITE_RUN_FROM_PACKAGE"              = local.asn_pkg_url
+    "MAXMIND_ACCOUNT_ID"                    = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.maxmind_account.versionless_id})"
+    "MAXMIND_LICENSE_KEY"                   = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.maxmind.versionless_id})"
+    "AsnSchedule"                           = var.asn_refresh_cron
   }
 }
