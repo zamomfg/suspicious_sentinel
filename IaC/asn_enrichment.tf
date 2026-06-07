@@ -35,6 +35,15 @@ resource "azurerm_storage_container" "asn_deployments" {
   container_access_type = "private"
 }
 
+# The provider uses Azure AD for blob data-plane operations (storage_use_azuread
+# in provider.tf), so the CI/CD identity needs a data-plane role to write the
+# deployment zip and seed blob below.
+resource "azurerm_role_assignment" "asn_sa_ci_blob" {
+  scope                = azurerm_storage_account.asn.id
+  role_definition_name = "Storage Blob Data Contributor"
+  principal_id         = data.azurerm_client_config.current.object_id
+}
+
 # Seed the "last build seen" marker so the function's input binding always has a
 # blob to read on the first run. The function overwrites its content each time it
 # downloads, so ignore content drift here.
@@ -44,6 +53,8 @@ resource "azurerm_storage_blob" "asn_last_modified_seed" {
   storage_container_name = azurerm_storage_container.asn_data.name
   type                   = "Block"
   source_content         = ""
+
+  depends_on = [azurerm_role_assignment.asn_sa_ci_blob]
 
   lifecycle {
     ignore_changes = [source_content, content_md5]
@@ -119,6 +130,8 @@ resource "azurerm_storage_blob" "asn_fetch_pkg" {
   type                   = "Block"
   source                 = data.archive_file.asn_fetch.output_path
   content_md5            = data.archive_file.asn_fetch.output_md5
+
+  depends_on = [azurerm_role_assignment.asn_sa_ci_blob]
 }
 
 # Read SAS for the deployment zip (WEBSITE_RUN_FROM_PACKAGE).

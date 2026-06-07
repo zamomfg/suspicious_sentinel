@@ -20,6 +20,12 @@ When adding new inputs:
 - Keep commit messages brief.
 - Do NOT add a `Co-authored-by` trailer.
 
+## Comments
+- Minimize comments. If the code is explicit (clear names, obvious structure),
+  add no comment.
+- Multi-line comments are very rare — only for genuine edge cases or code that
+  otherwise looks wrong/surprising. Otherwise keep to a short single line, if any.
+
 ## Terraform style
 - Prefer explicit resource blocks over `for_each`/`count` loops driven by
   `locals`/maps when the count is modest (roughly ≤10 resources) — explicit
