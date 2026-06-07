@@ -1,477 +1,477 @@
 [
     {
         "name": "TimeGenerated",
-        "type": "enter_type",
+        "type": "datetime",
         "description": "enter_description"
     },
     {
         "name": "EventVendor",
-        "type": "enter_type",
+        "type": "string",
         "description": "enter_description"
     },
     {
         "name": "EventTime",
-        "type": "enter_type",
+        "type": "string",
         "description": "enter_description"
     },
     {
         "name": "Hostname",
-        "type": "enter_type",
+        "type": "string",
         "description": "enter_description"
     },
     {
         "name": "EventCategory",
-        "type": "enter_type",
+        "type": "string",
         "description": "enter_description"
     },
     {
         "name": "DvcType",
-        "type": "enter_type",
+        "type": "string",
         "description": "enter_description"
     },
     {
         "name": "DvcMacAddr",
-        "type": "enter_type",
+        "type": "string",
         "description": "enter_description"
     },
     {
         "name": "FirmwareVersion",
-        "type": "enter_type",
+        "type": "string",
         "description": "enter_description"
     },
     {
         "name": "EventMessage",
-        "type": "enter_type",
+        "type": "string",
         "description": "enter_description"
     },
     {
         "name": "WlanId",
-        "type": "enter_type",
+        "type": "string",
         "description": "enter_description"
     },
     {
         "name": "SrcType",
-        "type": "enter_type",
+        "type": "string",
         "description": "enter_description"
     },
     {
         "name": "Service",
-        "type": "enter_type",
+        "type": "string",
         "description": "enter_description"
     },
     {
         "name": "FlowId",
-        "type": "enter_type",
+        "type": "string",
         "description": "enter_description"
     },
     {
         "name": "DvcInboundInterface",
-        "type": "enter_type",
+        "type": "string",
         "description": "enter_description"
     },
     {
         "name": "DvcOutboundInterface",
-        "type": "enter_type",
+        "type": "string",
         "description": "enter_description"
     },
     {
         "name": "DvcAction",
-        "type": "enter_type",
+        "type": "string",
         "description": "enter_description"
     },
     {
         "name": "NetworkRuleName",
-        "type": "enter_type",
+        "type": "string",
         "description": "enter_description"
     },
     {
         "name": "SrcMacAddr",
-        "type": "enter_type",
+        "type": "string",
         "description": "enter_description"
     },
     {
         "name": "SrcIpAddr",
-        "type": "enter_type",
+        "type": "string",
         "description": "enter_description"
     },
     {
         "name": "SrcPortNumber",
-        "type": "enter_type",
+        "type": "string",
         "description": "enter_description"
     },
     {
         "name": "DstMacAddr",
-        "type": "enter_type",
+        "type": "string",
         "description": "enter_description"
     },
     {
         "name": "DstIpAddr",
-        "type": "enter_type",
+        "type": "string",
         "description": "enter_description"
     },
     {
         "name": "DstPortNumber",
-        "type": "enter_type",
+        "type": "string",
         "description": "enter_description"
     },
     {
         "name": "NetworkBytes",
-        "type": "enter_type",
+        "type": "string",
         "description": "enter_description"
     },
     {
         "name": "Tos",
-        "type": "enter_type",
+        "type": "string",
         "description": "enter_description"
     },
     {
         "name": "Prec",
-        "type": "enter_type",
+        "type": "string",
         "description": "enter_description"
     },
     {
         "name": "Ttl",
-        "type": "enter_type",
+        "type": "string",
         "description": "enter_description"
     },
     {
         "name": "NetworkProtocol",
-        "type": "enter_type",
+        "type": "string",
         "description": "enter_description"
     },
     {
         "name": "Window",
-        "type": "enter_type",
+        "type": "string",
         "description": "enter_description"
     },
     {
         "name": "Res",
-        "type": "enter_type",
+        "type": "string",
         "description": "enter_description"
     },
     {
         "name": "Mark",
-        "type": "enter_type",
+        "type": "string",
         "description": "enter_description"
     },
     {
         "name": "DnsQuery",
-        "type": "enter_type",
+        "type": "string",
         "description": "enter_description"
     },
     {
         "name": "DnsServer",
-        "type": "enter_type",
+        "type": "string",
         "description": "enter_description"
     },
     {
         "name": "SrcDvcMacAddr",
-        "type": "enter_type",
+        "type": "string",
         "description": "enter_description"
     },
     {
         "name": "AssocStatus",
-        "type": "enter_type",
+        "type": "string",
         "description": "enter_description"
     },
     {
         "name": "EventResult",
-        "type": "enter_type",
+        "type": "string",
         "description": "enter_description"
     },
     {
         "name": "EventResultDetails",
-        "type": "enter_type",
+        "type": "string",
         "description": "enter_description"
     },
     {
         "name": "Message",
-        "type": "enter_type",
+        "type": "string",
         "description": "enter_description"
     },
     {
         "name": "WifiClientAlias",
-        "type": "enter_type",
+        "type": "string",
         "description": "enter_description"
     },
     {
         "name": "WifiClientHostname",
-        "type": "enter_type",
+        "type": "string",
         "description": "enter_description"
     },
     {
         "name": "WifiClientIp",
-        "type": "enter_type",
+        "type": "string",
         "description": "enter_description"
     },
     {
         "name": "WifiClientMac",
-        "type": "enter_type",
+        "type": "string",
         "description": "enter_description"
     },
     {
         "name": "WifiChannel",
-        "type": "enter_type",
+        "type": "string",
         "description": "enter_description"
     },
     {
         "name": "WifiChannelWidth",
-        "type": "enter_type",
+        "type": "string",
         "description": "enter_description"
     },
     {
         "name": "WifiName",
-        "type": "enter_type",
+        "type": "string",
         "description": "enter_description"
     },
     {
         "name": "WifiBand",
-        "type": "enter_type",
+        "type": "string",
         "description": "enter_description"
     },
     {
         "name": "WifiAuthMethod",
-        "type": "enter_type",
+        "type": "string",
         "description": "enter_description"
     },
     {
         "name": "WifiRssi",
-        "type": "enter_type",
+        "type": "string",
         "description": "enter_description"
     },
     {
         "name": "WifiLastDeviceName",
-        "type": "enter_type",
+        "type": "string",
         "description": "enter_description"
     },
     {
         "name": "WifiLastDeviceIp",
-        "type": "enter_type",
+        "type": "string",
         "description": "enter_description"
     },
     {
         "name": "WifiLastDeviceMac",
-        "type": "enter_type",
+        "type": "string",
         "description": "enter_description"
     },
     {
         "name": "WifiLastDeviceModel",
-        "type": "enter_type",
+        "type": "string",
         "description": "enter_description"
     },
     {
         "name": "WifiConnectedDeviceName",
-        "type": "enter_type",
+        "type": "string",
         "description": "enter_description"
     },
     {
         "name": "WifiConnectedDeviceIp",
-        "type": "enter_type",
+        "type": "string",
         "description": "enter_description"
     },
     {
         "name": "WifiConnectedDeviceMac",
-        "type": "enter_type",
+        "type": "string",
         "description": "enter_description"
     },
     {
         "name": "WifiConnectedDeviceModel",
-        "type": "enter_type",
+        "type": "string",
         "description": "enter_description"
     },
     {
         "name": "WifiDuration",
-        "type": "enter_type",
+        "type": "string",
         "description": "enter_description"
     },
     {
         "name": "WifiUsageDown",
-        "type": "enter_type",
+        "type": "string",
         "description": "enter_description"
     },
     {
         "name": "WifiUsageUp",
-        "type": "enter_type",
+        "type": "string",
         "description": "enter_description"
     },
     {
         "name": "WifiNetworkName",
-        "type": "enter_type",
+        "type": "string",
         "description": "enter_description"
     },
     {
         "name": "WifiNetworkSubnet",
-        "type": "enter_type",
+        "type": "string",
         "description": "enter_description"
     },
     {
         "name": "WifiNetworkVlan",
-        "type": "enter_type",
+        "type": "string",
         "description": "enter_description"
     },
     {
         "name": "WifiUtcTime",
-        "type": "enter_type",
+        "type": "string",
         "description": "enter_description"
     },
     {
         "name": "WifiLastConnectedToWiFiChannel",
-        "type": "enter_type",
+        "type": "string",
         "description": "enter_description"
     },
     {
         "name": "WifiLastConnectedToWiFiChannelWidth",
-        "type": "enter_type",
+        "type": "string",
         "description": "enter_description"
     },
     {
         "name": "WifiLastConnectedToWiFiBand",
-        "type": "enter_type",
+        "type": "string",
         "description": "enter_description"
     },
     {
         "name": "WifiLastConnectedToWiFiRssi",
-        "type": "enter_type",
+        "type": "string",
         "description": "enter_description"
     },
     {
         "name": "WiredClientAlias",
-        "type": "enter_type",
+        "type": "string",
         "description": "enter_description"
     },
     {
         "name": "WiredClientHostname",
-        "type": "enter_type",
+        "type": "string",
         "description": "enter_description"
     },
     {
         "name": "WiredClientIp",
-        "type": "enter_type",
+        "type": "string",
         "description": "enter_description"
     },
     {
         "name": "WiredClientMac",
-        "type": "enter_type",
+        "type": "string",
         "description": "enter_description"
     },
     {
         "name": "WiredConnectedDeviceName",
-        "type": "enter_type",
+        "type": "string",
         "description": "enter_description"
     },
     {
         "name": "WiredConnectedDevicePort",
-        "type": "enter_type",
+        "type": "string",
         "description": "enter_description"
     },
     {
         "name": "WiredConnectedDeviceIp",
-        "type": "enter_type",
+        "type": "string",
         "description": "enter_description"
     },
     {
         "name": "WiredConnectedDeviceMac",
-        "type": "enter_type",
+        "type": "string",
         "description": "enter_description"
     },
     {
         "name": "WiredLinkSpeed",
-        "type": "enter_type",
+        "type": "string",
         "description": "enter_description"
     },
     {
         "name": "WiredDuration",
-        "type": "enter_type",
+        "type": "string",
         "description": "enter_description"
     },
     {
         "name": "WiredUsageDown",
-        "type": "enter_type",
+        "type": "string",
         "description": "enter_description"
     },
     {
         "name": "WiredUsageUp",
-        "type": "enter_type",
+        "type": "string",
         "description": "enter_description"
     },
     {
         "name": "WiredNetworkName",
-        "type": "enter_type",
+        "type": "string",
         "description": "enter_description"
     },
     {
         "name": "WiredNetworkSubnet",
-        "type": "enter_type",
+        "type": "string",
         "description": "enter_description"
     },
     {
         "name": "WiredNetworkVlan",
-        "type": "enter_type",
+        "type": "string",
         "description": "enter_description"
     },
     {
         "name": "WiredUtcTime",
-        "type": "enter_type",
+        "type": "string",
         "description": "enter_description"
     },
     {
         "name": "VpnUser",
-        "type": "enter_type",
+        "type": "string",
         "description": "enter_description"
     },
     {
         "name": "VpnClientIp",
-        "type": "enter_type",
+        "type": "string",
         "description": "enter_description"
     },
     {
         "name": "VpnSourceIp",
-        "type": "enter_type",
+        "type": "string",
         "description": "enter_description"
     },
     {
         "name": "VpnName",
-        "type": "enter_type",
+        "type": "string",
         "description": "enter_description"
     },
     {
         "name": "VpnType",
-        "type": "enter_type",
+        "type": "string",
         "description": "enter_description"
     },
     {
         "name": "VpnServerAddress",
-        "type": "enter_type",
+        "type": "string",
         "description": "enter_description"
     },
     {
         "name": "VpnSubnet",
-        "type": "enter_type",
+        "type": "string",
         "description": "enter_description"
     },
     {
         "name": "VpnWan",
-        "type": "enter_type",
+        "type": "string",
         "description": "enter_description"
     },
     {
         "name": "VpnUtcTime",
-        "type": "enter_type",
+        "type": "string",
         "description": "enter_description"
     },
     {
         "name": "VpnDuration",
-        "type": "enter_type",
+        "type": "string",
         "description": "enter_description"
     },
     {
         "name": "VpnUsageDown",
-        "type": "enter_type",
+        "type": "string",
         "description": "enter_description"
     },
     {
         "name": "VpnUsageUp",
-        "type": "enter_type",
+        "type": "string",
         "description": "enter_description"
     }
 ]
