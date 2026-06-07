@@ -22,6 +22,7 @@ locals {
 # }
 
 # Ubiquiti UniFi: per-category split.
+# Logic is from the official parser but split up to different tables https://github.com/Azure/Azure-Sentinel/blob/master/Solutions/Ubiquiti%20UniFi/Parsers/UbiquitiAuditEvent.yaml
 locals {
   # Projection of the common columns (Message is the raw SyslogMessage).
   unifi_common_projection = "TimeGenerated,EventVendor,EventTime,Hostname,EventCategory,DvcType,DvcMacAddr,FirmwareVersion,EventMessage,Message"

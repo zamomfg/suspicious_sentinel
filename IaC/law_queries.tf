@@ -24,6 +24,28 @@ resource "azurerm_log_analytics_saved_search" "ubiquiti_audit_event_aggregator" 
   query = "union isfuzzy=true ${join(", ", [for k in keys(local.unifi_categories) : module.unifi_tables[k].name])}"
 }
 
+resource "azurerm_log_analytics_saved_search" "unified_sign_in_logs" {
+  name                       = "UnifiedSignInLogs"
+  function_alias             = "UnifiedSignInLogs"
+  display_name               = "Unified Sign-In Logs"
+  category                   = "Security"
+  log_analytics_workspace_id = azurerm_log_analytics_workspace.law.id
+
+  query = <<-EOT
+    union isfuzzy=true SigninLogs, AADNonInteractiveUserSignInLogs
+    // Rename all columns named _dynamic to normalize the column names
+    | extend ConditionalAccessPolicies = iff(isempty( ConditionalAccessPolicies_dynamic ), todynamic(ConditionalAccessPolicies_string), ConditionalAccessPolicies_dynamic)
+    | extend Status = iff(isempty( Status_dynamic ), todynamic(Status_string), Status_dynamic)
+    | extend MfaDetail = iff(isempty( MfaDetail_dynamic ), todynamic(MfaDetail_string), MfaDetail_dynamic)
+    | extend DeviceDetail = iff(isempty( DeviceDetail_dynamic ), todynamic(DeviceDetail_string), DeviceDetail_dynamic)
+    | extend LocationDetails = iff(isempty( LocationDetails_dynamic ), todynamic(LocationDetails_string), LocationDetails_dynamic)
+    | extend TokenProtection = iff(isempty(TokenProtectionStatusDetails_dynamic),todynamic(TokenProtectionStatusDetails_string),TokenProtectionStatusDetails_dynamic)
+    // Remove duplicated columns
+    | project-away *_dynamic, *_string
+  EOT
+}
+
+
 resource "azurerm_log_analytics_query_pack_query" "dcr_metrics" {
   query_pack_id = azurerm_log_analytics_query_pack.query_pack.id
   display_name  = "${local.custom_query_prefix}dcr_mectrics"
@@ -54,20 +76,3 @@ resource "azurerm_log_analytics_saved_search" "func_geolite_asn" {
                 ASN
   EOT
 }
-
-# resource "azurerm_log_analytics_saved_search" "func_local_ip_ranges" {
-#   name                       = "${local.custom_func_prefix}local_ip_ranges"
-#   function_alias             = "${local.custom_func_prefix}local_ip_ranges"
-#   display_name               = "${local.custom_func_prefix}local_ip_ranges"
-
-#   log_analytics_workspace_id = azurerm_log_analytics_workspace.law.id
-
-#   category     = "custom"
-#   query        = <<-EOT
-#                 let LocalRanges = externaldata(Name:string, IpRange:string)
-#                 [ 
-#                   h@"${module.local_ip_ranges.sas_token_url}"
-#                 ] with (format="csv", ignoreFirstRecord=true);
-#                 LocalRanges
-#   EOT
-# }
