@@ -130,3 +130,17 @@ resource "azapi_resource" "content" {
 
   depends_on = [azapi_resource.solution]
 }
+
+# Installing a contentTemplate alone leaves the portal's Content Hub UI without
+# the metadata it reads (it errors with "metadata.properties is undefined" when
+# opening a rule/workbook). Create the companion metadata per item.
+resource "azurerm_sentinel_metadata" "content" {
+  for_each = local.templates
+
+  name         = each.value.contentId
+  workspace_id = var.log_analytics_workspace_id
+  content_id   = each.value.contentId
+  kind         = each.value.contentKind
+  version      = each.value.version
+  parent_id    = azapi_resource.content[each.key].id
+}
