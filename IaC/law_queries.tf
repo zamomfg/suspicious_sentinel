@@ -11,6 +11,28 @@ resource "azurerm_log_analytics_query_pack" "query_pack" {
   tags                = var.tags
 }
 
+  
+#   "AzureMetrics
+# | where TimeGenerated > ago(6h)
+# | where ResourceId has "/DATACOLLECTIONRULES/"
+# | where MetricName in ("LogsIngestionBytes","RowsReceived_Count","RowsDropped_Count","LogsTransformationErrors", "TransformationRuntime_DurationMs")
+# | summarize Total = sum(Total) by MetricName, bin(TimeGenerated, 15m)
+# | render timechart"
+# }
+
+resource "azurerm_log_analytics_query_pack_query" "dcr_metrics" {
+  query_pack_id = azurerm_log_analytics_query_pack.query_pack.id
+  display_name = "${local.custom_func_prefix}dcr_mectrics"
+
+  body = <<-EOT
+    | where TimeGenerated > ago(6h)
+    | where ResourceId has "/DATACOLLECTIONRULES/"
+    | where MetricName in ("LogsIngestionBytes","RowsReceived_Count","RowsDropped_Count","LogsTransformationErrors", "TransformationRuntime_DurationMs")
+    | summarize Total = sum(Total) by MetricName, bin(TimeGenerated, 15m)
+    | render timechart
+  EOT
+}
+
 
 # module "local_ip_ranges" {
 #   source = "./modules/terraform-file-storage"

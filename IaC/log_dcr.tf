@@ -83,10 +83,10 @@ module "dcr_unifi" {
   ]
 
   stream_declarations = [
-    {
-      stream_name   = "${local.custom_stream_prefix}${module.table_unifi_firewall.name}"
-      column_schema = module.table_unifi_firewall.column_schema
-    },
+    # {
+    #   stream_name   = "${local.custom_stream_prefix}${module.table_unifi_firewall.name}"
+    #   column_schema = module.table_unifi_firewall.column_schema
+    # },
     {
       stream_name   = "${local.custom_stream_prefix}${module.table_unifi.name}"
       column_schema = module.table_unifi.column_schema
