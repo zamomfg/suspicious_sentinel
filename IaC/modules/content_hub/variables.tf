@@ -4,6 +4,21 @@ variable "log_analytics_workspace_id" {
   description = "Resource ID of the Sentinel-enabled Log Analytics workspace to install content into."
 }
 
+variable "resource_group_name" {
+  type        = string
+  description = "Resource group of the workspace; scope for the ARM content deployments."
+}
+
+variable "workspace_name" {
+  type        = string
+  description = "Workspace name, passed as the ARM 'workspace' parameter."
+}
+
+variable "location" {
+  type        = string
+  description = "Azure region, passed as the ARM 'location'/'workspace-location' parameters."
+}
+
 variable "content_id" {
   type        = string
   description = <<-EOT

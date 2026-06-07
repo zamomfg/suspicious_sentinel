@@ -97,50 +97,27 @@ data "azapi_resource" "template" {
   response_export_values = ["properties.packagedContent"]
 }
 
-# Deploy each selected content item.
-resource "azapi_resource" "content" {
+# Deploy each item by running its packagedContent as an ARM template (the
+# supported install path). This creates a correctly-formed contentTemplate +
+# its metadata so the portal renders the item; storing packagedContent as a
+# contentTemplate mainTemplate instead leaves metadata null and breaks the portal.
+resource "azurerm_resource_group_template_deployment" "content" {
   for_each = local.templates
 
-  type      = "Microsoft.SecurityInsights/contentTemplates@${local.api_version}"
-  name      = each.value.contentId
-  parent_id = var.log_analytics_workspace_id
+  name                = substr("ch-${each.value.contentId}", 0, 64)
+  resource_group_name = var.resource_group_name
+  deployment_mode     = "Incremental"
 
-  body = {
-    properties = {
-      contentId            = each.value.contentId
-      contentKind          = each.value.contentKind
-      version              = each.value.version
-      displayName          = each.value.displayName
-      contentProductId     = each.value.contentProductId
-      contentSchemaVersion = each.value.contentSchemaVersion
-      packageId            = each.value.packageId
-      packageKind          = try(each.value.packageKind, "Solution")
-      packageName          = try(each.value.packageName, local.package.displayName)
-      packageVersion       = local.solution_version
-      source               = each.value.source
-      author               = try(each.value.author, null)
-      support              = try(each.value.support, null)
-      # contentProductTemplates exposes the ARM template as packagedContent
-      # (per-item GET only); contentTemplates expects it under mainTemplate.
-      mainTemplate = data.azapi_resource.template[each.key].output.properties.packagedContent
-    }
+  template_content = jsonencode(data.azapi_resource.template[each.key].output.properties.packagedContent)
+  parameters_content = jsonencode({
+    "location"           = { value = var.location }
+    "workspace"          = { value = var.workspace_name }
+    "workspace-location" = { value = var.location }
+  })
+
+  lifecycle {
+    ignore_changes = [template_content, parameters_content]
   }
 
-  schema_validation_enabled = false
-
   depends_on = [azapi_resource.solution]
-}
-
-# Installing a contentTemplate alone leaves the portal's Content Hub UI without
-# the metadata it reads (it errors with "metadata.properties is undefined" when
-# opening a rule/workbook). Create the companion metadata per item.
-resource "azurerm_sentinel_metadata" "content" {
-  for_each = local.templates
-
-  name         = each.value.contentId
-  workspace_id = var.log_analytics_workspace_id
-  content_id   = each.value.contentId
-  kind         = each.value.contentKind
-  version      = each.value.version
-  parent_id    = azapi_resource.content[each.key].id
 }
