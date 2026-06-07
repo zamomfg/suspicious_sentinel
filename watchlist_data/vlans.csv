@@ -1,0 +1,17 @@
+{
+	"data": "ENC[AES256_GCM,data:KcLxIjUWCeUkaDOepYRcGqV/VWD/IvZJP0PF5J2dNkrYSRU+QRjmEBuRc6kDfuJq1P1uY0Yx404S76tm3S3uB3zlDp0ILUj4K1hAMcFHm5Zmo4RLymSwlXz/m52ggoqHy4XAK4uZjFc4HV5wu/o3Gmq7ELBahPtxuCAKOuujG4pGoKjBoQUxc2Th1a9kzDSneOX7Bdd9Ro2mTYDb/sdzw+NqdLBMx2LUeQV4IWLX8kJyRe94+5pcBhb3OOrOWTWAFevJ+7p7zyCzUEv5dV7INvmt4zw=,iv:Fo5Jwf07mz54Uj0dR/GU2WbyEmR6ZV5ytrNc1pmyezw=,tag:NigODiXdfubEodTxGpKe2A==,type:str]",
+	"sops": {
+		"azure_kv": [
+			{
+				"created_at": "2026-06-07T23:18:33Z",
+				"enc": "J3t1ysqPWsYyylPOSgkTXelb0AAObekzCm_Pyj9agZRIAXoJVwtUKMVVn_dbGO7AWJVlnWuwefhtKiro6jiAQRJBmmu-5nJYkfH_H9MBKLhGNxqJeaEtxNN27hqoCTLeURvDf7i2n4Q5eHK74fOojaM7zMaDvfCZSZzOOGtnvFe9sLZV3eOm_W7Wuy_eyUBB2vD9YibzWeKw2gndXrdORJTvqZbG2_3fB_gCeWaVsJZ9UoqLHbPF8ULx4jSVB7lEAhch_CZaD3FnVFE9s8yuqj4wzSX7ogrFlm1jH38swyKTHDo4l8qxlxbw6h1c2rQxnXYJInTZbW66QCHvfPjT-g",
+				"name": "sops",
+				"vault_url": "https://kv-sops-neu-001.vault.azure.net",
+				"version": "507fee9f97aa45f78067eaf47bc22c49"
+			}
+		],
+		"lastmodified": "2026-06-07T23:18:35Z",
+		"mac": "ENC[AES256_GCM,data:iqpKmUlMQ5KivV4jC5dfC2FkDTlGBGv6cSVlrQ9BfYId9amyp5T81CGRDCuX8nYiY+L6XDOR7RoYHnLt+s52LAmH8IYzFalb99cWmF7v1IjX/Kj3MI69MdNJ/aBaYLYxbf3GjGTPCMiMZ7ILE21pUCL0cQv8WM+9fp0TRfRaMA8=,iv:m6UMkEHl87SJ5E8cd6xVNkwL01hnIESNmUn9h2ph5TI=,tag:CrHlNlqxKjMy2vX8V6BZaw==,type:str]",
+		"version": "3.13.1"
+	}
+}

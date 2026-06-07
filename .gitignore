@@ -7,6 +7,7 @@ IaC/.build/
 /test_data/*
 /watchlist_data/*
 !/watchlist_data/test_hosts.csv
+!/watchlist_data/vlans.csv
 
 logger.conf
 var.env

@@ -5,6 +5,7 @@ locals {
   # Decrypted at plan/apply by the sops provider; sensitive, so items are keyed
   # by index (not hostname) to keep values out of the public CI plan output.
   internal_hosts = csvdecode(data.sops_file.internal_hosts.raw)
+  vlans          = csvdecode(data.sops_file.vlans.raw)
 }
 
 data "sops_file" "internal_hosts" {
@@ -25,42 +26,23 @@ resource "azurerm_sentinel_watchlist_item" "internal_hosts" {
   properties   = sensitive(local.internal_hosts[count.index])
 }
 
-# resource "random_string" "rand" {
-#   length  = 3
-#   upper   = false
-#   lower   = true
-#   numeric = true
-#   special = false
-# }
+data "sops_file" "vlans" {
+  source_file = "${local.watchlist_data_base_dir}vlans.csv"
+  input_type  = "raw"
+}
 
-# resource "azurerm_storage_account" "sa_watchlist" {
-#   resource_group_name = data.azurerm_resource_group.rg_log.name
-#   location            = var.location
+resource "azurerm_sentinel_watchlist" "vlans" {
+  name                       = "Vlans"
+  display_name               = "VLANs / network segments"
+  log_analytics_workspace_id = azurerm_log_analytics_workspace.law.id
+  item_search_key            = "Subnet"
+}
 
-#   name = "stwawl${local.location_short}${random_string.rand.result}"
-
-#   account_tier             = "Standard"
-#   account_replication_type = "LRS"
-
-#   https_traffic_only_enabled    = true
-#   min_tls_version               = "TLS1_2"
-#   public_network_access_enabled = true
-
-#   shared_access_key_enabled       = true
-#   default_to_oauth_authentication = true
-# }
-
-# resource "azurerm_storage_container" "container_watchlist" {
-#   name                  = "watchlists"
-#   storage_account_id    = azurerm_storage_account.sa_watchlist.id
-#   container_access_type = "private"
-# }
-
-# resource "azurerm_role_assignment" "sa_watchlist_blob_contributor" {
-#   scope                = azurerm_storage_container.container_watchlist.id
-#   role_definition_name = "Storage Blob Data Contributor"
-#   principal_id         = data.azurerm_client_config.current.object_id
-# }
+resource "azurerm_sentinel_watchlist_item" "vlans" {
+  count        = length(nonsensitive(local.vlans))
+  watchlist_id = azurerm_sentinel_watchlist.vlans.id
+  properties   = sensitive(local.vlans[count.index])
+}
 
 # module "test_watchlist" {
 #   source = "./modules/sentinel_watchlist"
