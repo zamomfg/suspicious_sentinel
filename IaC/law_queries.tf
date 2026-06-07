@@ -11,7 +11,7 @@ resource "azurerm_log_analytics_query_pack" "query_pack" {
   tags                = var.tags
 }
 
-  
+
 #   "AzureMetrics
 # | where TimeGenerated > ago(6h)
 # | where ResourceId has "/DATACOLLECTIONRULES/"
@@ -20,9 +20,31 @@ resource "azurerm_log_analytics_query_pack" "query_pack" {
 # | render timechart"
 # }
 
+# Passthrough parser for the Ubiquiti UniFi solution.
+#
+# The solution's analytic rules, hunting queries and workbooks all reference the
+# FUNCTION `UbiquitiAuditEvent`, never the raw `Ubiquiti_CL` table. Normally that
+# function does the heavy regex extraction. We've moved that normalization into
+# the DCR transformKQL instead, so `Ubiquiti_CL` already stores the parsed
+# columns. This function is therefore a thin passthrough that satisfies the name
+# every consumer expects while letting queries hit the table directly (faster,
+# no query-time parsing).
+#
+# We deliberately do NOT install the solution's own parser (install.parsers =
+# false in sentinel_content_hub.tf) so the solution never overwrites this alias.
+resource "azurerm_log_analytics_saved_search" "ubiquiti_audit_event_passthrough" {
+  name                       = "UbiquitiAuditEvent"
+  function_alias             = "UbiquitiAuditEvent"
+  display_name               = "Parser for UbiquitiAuditEvent (passthrough; normalization done at ingest via DCR transformKQL)"
+  category                   = "Microsoft Sentinel Parser"
+  log_analytics_workspace_id = azurerm_log_analytics_workspace.law.id
+
+  query = "Ubiquiti_CL"
+}
+
 resource "azurerm_log_analytics_query_pack_query" "dcr_metrics" {
   query_pack_id = azurerm_log_analytics_query_pack.query_pack.id
-  display_name = "${local.custom_query_prefix}dcr_mectrics"
+  display_name  = "${local.custom_query_prefix}dcr_mectrics"
 
   body = <<-EOT
     AzureMetrics

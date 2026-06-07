@@ -66,6 +66,13 @@ variable "data_flows" {
     output_stream      = optional(string)
     transform_kql      = optional(string)
   }))
+
+  validation {
+    condition = alltrue([
+      for df in var.data_flows : length(coalesce(df.transform_kql, "")) <= 15360
+    ])
+    error_message = "KQL transformation needs to be no longer than 15360 characters"
+  }
 }
 
 variable "logging_workspace_id" {

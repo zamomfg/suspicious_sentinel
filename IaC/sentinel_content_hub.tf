@@ -24,3 +24,22 @@ module "azure_key_vault" {
     analytics_rules = true
   }
 }
+
+# Ubiquiti UniFi. Install everything EXCEPT the parser — our own passthrough
+# `UbiquitiAuditEvent` function (law_queries.tf) provides that name, backed by
+# the DCR transformKQL-normalized Ubiquiti_CL table. Keeping parsers = false
+# means a solution update won't clobber our function alias.
+module "ubiquiti_unifi" {
+  source = "./modules/content_hub"
+
+  log_analytics_workspace_id = azurerm_log_analytics_workspace.law.id
+  content_id                 = "azuresentinel.azure-sentinel-solution-ubiquitiunifi"
+  solution_version           = "3.0.4" # omit to track catalog latest; bump to update
+
+  install = {
+    workbooks       = true
+    hunting_queries = true
+    analytics_rules = true
+    parsers         = false # ours wins; see UbiquitiAuditEvent passthrough
+  }
+}
