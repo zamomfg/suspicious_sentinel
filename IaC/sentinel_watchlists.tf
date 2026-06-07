@@ -1,6 +1,28 @@
 
 locals {
   watchlist_data_base_dir = "../watchlist_data/"
+
+  # Decrypted at plan/apply by the sops provider; sensitive, so items are keyed
+  # by index (not hostname) to keep values out of the public CI plan output.
+  internal_hosts = csvdecode(data.sops_file.internal_hosts.raw)
+}
+
+data "sops_file" "internal_hosts" {
+  source_file = "${local.watchlist_data_base_dir}test_hosts.csv"
+  input_type  = "raw"
+}
+
+resource "azurerm_sentinel_watchlist" "internal_hosts" {
+  name                       = "InternalHosts"
+  display_name               = "Internal hosts"
+  log_analytics_workspace_id = azurerm_log_analytics_workspace.law.id
+  item_search_key            = "Host"
+}
+
+resource "azurerm_sentinel_watchlist_item" "internal_hosts" {
+  count        = length(nonsensitive(local.internal_hosts))
+  watchlist_id = azurerm_sentinel_watchlist.internal_hosts.id
+  properties   = sensitive(local.internal_hosts[count.index])
 }
 
 # resource "random_string" "rand" {

@@ -1,3 +1,17 @@
-Host, Comment
-test.intern.test.se, lol
-test2.intern.test.se, hej
+{
+	"data": "ENC[AES256_GCM,data:8FWIZmJcwWgbH8Pj2dlPwVNqrILwYAQtPfz2qXuf+z++kvlGs/Lcc1cKPo9LKie7ELkXZEz64EUh3GJoCaiz9g==,iv:KnfU38IeuG69NynZqxAkEreEutlXWGJnCUR63wGZi0g=,tag:7R6TW5KqXUH/v86dq4amqw==,type:str]",
+	"sops": {
+		"azure_kv": [
+			{
+				"created_at": "2026-06-07T18:54:32Z",
+				"enc": "BlK10ExOwU20LzCn0QKi3u5GROI8uIkG_V5MV_dWkm4FRQpUh3b0B-ob0eUyFdS-t1ZsqsiPO0rrvrMBOYuP1zcHkF6dwoZHIb44OmziVsXLC670ovcUpQDVBrkGxg0o0b02kn2_uOUmfkEo2T-c77k6qbhoH_q7clFuKhvuO5ibUpLSHbI5LN-R1-eIV3dtYSwrMW0s-pXX-Rxl8cvFSpwaJbZrzLOoZDLkuQdIbwpNfKFCBBRoCB-j6-sdhn0PqSP4-vkagNyKaiptGphAs3Jm_dkaAeccN_vB7LSsWo8ug__lSiJj0_NKyLddrDXQS9UAG_zre8jqC7ttr9n9MQ",
+				"name": "sops",
+				"vault_url": "https://kv-sops-neu-001.vault.azure.net",
+				"version": "507fee9f97aa45f78067eaf47bc22c49"
+			}
+		],
+		"lastmodified": "2026-06-07T18:54:33Z",
+		"mac": "ENC[AES256_GCM,data:yugtm+OV8Ojzz5P5U90UI+rpMex0newhrmpEPbfwXJHtUvwBtsiPM5GxelsIxIgCR2QwVXVvltNnyQ+G61Gvzv2tDONlB4AaufGCYVyRtqEzibEcrV5kpQWmXpDu1q5GLqwQg8ypWHn61LCDbPi4OtwCIbTM5m47FpTlSR3aNtc=,iv:XpavR/MMtPFdcqvCCBauAvzRi5F8CcrpV/23sTGGSYA=,tag:PCnN58Aq9sm8AOK8RccIxQ==,type:str]",
+		"version": "3.13.1"
+	}
+}
