@@ -4,24 +4,13 @@ locals {
   table_postifx           = "_CL"
 }
 
-module "table_unifi_firewall" {
+module "table_ubiquiti" {
   source = "./modules/law_table"
 
-  name             = "UnifiFirewallLogs${local.table_postifx}"
+  name             = "Ubiquiti${local.table_postifx}"
   law_workspace_id = azurerm_log_analytics_workspace.law.id
 
   retention_in_days      = 90
   totalRetentionInDays   = 90
-  table_struct_file_path = "${local.struct_declaration_path}/unifi_firewall_struct.json"
-}
-
-module "table_unifi" {
-  source = "./modules/law_table"
-
-  name             = "UnifiLogs${local.table_postifx}"
-  law_workspace_id = azurerm_log_analytics_workspace.law.id
-
-  retention_in_days      = 90
-  totalRetentionInDays   = 90
-  table_struct_file_path = "${local.struct_declaration_path}/unifi_struct.json"
+  table_struct_file_path = "${local.struct_declaration_path}/Ubiquiti_CL_struct.json"
 }
