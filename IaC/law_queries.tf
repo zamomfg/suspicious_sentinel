@@ -22,9 +22,10 @@ resource "azurerm_log_analytics_query_pack" "query_pack" {
 
 resource "azurerm_log_analytics_query_pack_query" "dcr_metrics" {
   query_pack_id = azurerm_log_analytics_query_pack.query_pack.id
-  display_name = "${local.custom_func_prefix}dcr_mectrics"
+  display_name = "${local.custom_query_prefix}dcr_mectrics"
 
   body = <<-EOT
+    AzureMetrics
     | where TimeGenerated > ago(6h)
     | where ResourceId has "/DATACOLLECTIONRULES/"
     | where MetricName in ("LogsIngestionBytes","RowsReceived_Count","RowsDropped_Count","LogsTransformationErrors", "TransformationRuntime_DurationMs")
