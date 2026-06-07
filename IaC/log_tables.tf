@@ -2,6 +2,45 @@
 locals {
   struct_declaration_path = "../log_struct_declaration/"
   table_postifx           = "_CL"
+
+  # Columns present on every UniFi category table.
+  unifi_common_columns = concat(
+    [{ name = "TimeGenerated", type = "datetime" }],
+    [for n in [
+      "EventVendor", "EventTime", "Hostname", "EventCategory", "DvcType",
+      "DvcMacAddr", "FirmwareVersion", "EventMessage", "Message",
+    ] : { name = n, type = "string" }]
+  )
+
+  # Category-specific columns per table (all string). Single source of truth:
+  # module.unifi_tables builds each table schema from common + these, and the
+  # dcr_unifi transform projection (log_dcr.tf) derives its category columns
+  # from the same map. Every column here must be produced by the category's
+  # `extends` in local.unifi_categories.
+  unifi_category_extra_columns = {
+    Dropbear         = [for n in ["SrcIpAddr", "SrcPortNumber"] : { name = n, type = "string" }]
+    Hostapd          = [for n in ["WlanId", "SrcType", "SrcMacAddr", "DstMacAddr", "Service"] : { name = n, type = "string" }]
+    Firewall         = [for n in ["FlowId", "DvcInboundInterface", "DvcOutboundInterface", "DvcAction", "NetworkRuleName", "DstMacAddr", "SrcMacAddr", "SrcIpAddr", "SrcPortNumber", "DstIpAddr", "DstPortNumber", "NetworkBytes", "Tos", "Prec", "Ttl", "NetworkProtocol", "Window", "Res", "Mark"] : { name = n, type = "string" }]
+    DnsTimeout       = [for n in ["SrcType", "DnsQuery", "DnsServer"] : { name = n, type = "string" }]
+    Stahtd           = [for n in ["SrcDvcMacAddr", "WlanId", "AssocStatus", "EventResult"] : { name = n, type = "string" }]
+    AssocTracker     = [for n in ["WlanId", "SrcMacAddr", "EventResult"] : { name = n, type = "string" }]
+    StaEvent         = [for n in ["WlanId", "DvcAction", "SrcMacAddr", "SrcIpAddr"] : { name = n, type = "string" }]
+    Syswrapper       = []
+    Logread          = [for n in ["DstIpAddr", "DstPortNumber"] : { name = n, type = "string" }]
+    Stamgr           = [for n in ["DstMacAddr", "WlanId", "EventResultDetails"] : { name = n, type = "string" }]
+    Kernel           = []
+    Dnsmasq          = [for n in ["DstMacAddr", "SrcMacAddr", "DnsQuery", "SrcIpAddr"] : { name = n, type = "string" }]
+    Mcad             = []
+    UnifiMqBroker    = []
+    UbiosUdapiServer = []
+    Vpn              = [for n in ["VpnUser", "VpnClientIp", "VpnSourceIp", "VpnName", "VpnType", "VpnServerAddress", "VpnSubnet", "VpnWan", "VpnUtcTime", "VpnDuration", "VpnUsageDown", "VpnUsageUp"] : { name = n, type = "string" }]
+    WifiClient       = [for n in ["WifiClientAlias", "WifiClientHostname", "WifiClientIp", "WifiClientMac", "WifiChannel", "WifiChannelWidth", "WifiName", "WifiBand", "WifiAuthMethod", "WifiRssi", "WifiLastDeviceName", "WifiLastDeviceIp", "WifiLastDeviceMac", "WifiLastDeviceModel", "WifiConnectedDeviceName", "WifiConnectedDeviceIp", "WifiConnectedDeviceMac", "WifiConnectedDeviceModel", "WifiDuration", "WifiUsageDown", "WifiUsageUp", "WifiNetworkName", "WifiNetworkSubnet", "WifiNetworkVlan", "WifiUtcTime", "WifiLastConnectedToWiFiChannel", "WifiLastConnectedToWiFiChannelWidth", "WifiLastConnectedToWiFiBand", "WifiLastConnectedToWiFiRssi"] : { name = n, type = "string" }]
+    Wevent           = []
+    WiredClient      = [for n in ["WiredClientAlias", "WiredClientHostname", "WiredClientIp", "WiredClientMac", "WiredConnectedDeviceName", "WiredConnectedDevicePort", "WiredConnectedDeviceIp", "WiredConnectedDeviceMac", "WiredLinkSpeed", "WiredDuration", "WiredUsageDown", "WiredUsageUp", "WiredNetworkName", "WiredNetworkSubnet", "WiredNetworkVlan", "WiredUtcTime"] : { name = n, type = "string" }]
+    Earlyoom         = []
+    DpiFlowStats     = []
+    Coredns          = [for n in ["DnsQuery", "SrcIpAddr", "SrcPortNumber", "DstIpAddr", "DstPortNumber", "NetworkProtocol", "DstMacAddr", "SrcMacAddr"] : { name = n, type = "string" }]
+  }
 }
 
 module "table_ubiquiti" {
@@ -13,4 +52,19 @@ module "table_ubiquiti" {
   retention_in_days      = 90
   totalRetentionInDays   = 90
   table_struct_file_path = "${local.struct_declaration_path}/Ubiquiti_CL_struct.json"
+}
+
+# One tailored _CL table per UniFi log category. Driven by local.unifi_categories
+# (log_dcr.tf); each table's schema is the common columns plus the category's
+# entry in local.unifi_category_extra_columns above.
+module "unifi_tables" {
+  for_each = local.unifi_categories
+  source   = "./modules/law_table"
+
+  name             = "Ubiquiti${each.key}${local.table_postifx}"
+  law_workspace_id = azurerm_log_analytics_workspace.law.id
+
+  retention_in_days    = 90
+  totalRetentionInDays = 90
+  columns              = concat(local.unifi_common_columns, local.unifi_category_extra_columns[each.key])
 }

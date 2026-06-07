@@ -1,6 +1,12 @@
 
 locals {
-  table_struct = jsondecode(file(var.table_struct_file_path))
+  # Columns come from the inline `columns` object when provided, otherwise from
+  # the struct JSON file. Drop description keys that are null so the API body
+  # only carries columns that actually set one.
+  table_struct = [
+    for c in(var.columns != null ? var.columns : jsondecode(file(var.table_struct_file_path))) :
+    try(c.description, null) == null ? { name = c.name, type = c.type } : { name = c.name, type = c.type, description = c.description }
+  ]
 }
 
 resource "azapi_resource" "custom_table" {
@@ -10,7 +16,7 @@ resource "azapi_resource" "custom_table" {
 
   body = {
     properties = {
-    plan = var.plan
+      plan = var.plan
 
       schema = {
         name    = var.name

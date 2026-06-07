@@ -11,35 +11,17 @@ resource "azurerm_log_analytics_query_pack" "query_pack" {
   tags                = var.tags
 }
 
-
-#   "AzureMetrics
-# | where TimeGenerated > ago(6h)
-# | where ResourceId has "/DATACOLLECTIONRULES/"
-# | where MetricName in ("LogsIngestionBytes","RowsReceived_Count","RowsDropped_Count","LogsTransformationErrors", "TransformationRuntime_DurationMs")
-# | summarize Total = sum(Total) by MetricName, bin(TimeGenerated, 15m)
-# | render timechart"
-# }
-
-# Passthrough parser for the Ubiquiti UniFi solution.
+# Aggregator parser for the Ubiquiti UniFi solution.
 #
-# The solution's analytic rules, hunting queries and workbooks all reference the
-# FUNCTION `UbiquitiAuditEvent`, never the raw `Ubiquiti_CL` table. Normally that
-# function does the heavy regex extraction. We've moved that normalization into
-# the DCR transformKQL instead, so `Ubiquiti_CL` already stores the parsed
-# columns. This function is therefore a thin passthrough that satisfies the name
-# every consumer expects while letting queries hit the table directly (faster,
-# no query-time parsing).
-#
-# We deliberately do NOT install the solution's own parser (install.parsers =
-# false in sentinel_content_hub.tf) so the solution never overwrites this alias.
-resource "azurerm_log_analytics_saved_search" "ubiquiti_audit_event_passthrough" {
+# We deliberately do NOT install the solution's own parser since we have set up parsing for the unifi events at transform time
+resource "azurerm_log_analytics_saved_search" "ubiquiti_audit_event_aggregator" {
   name                       = "UbiquitiAuditEvent"
   function_alias             = "UbiquitiAuditEvent"
-  display_name               = "Parser for UbiquitiAuditEvent (passthrough; normalization done at ingest via DCR transformKQL)"
+  display_name               = "Parser for UbiquitiAuditEvent"
   category                   = "Microsoft Sentinel Parser"
   log_analytics_workspace_id = azurerm_log_analytics_workspace.law.id
 
-  query = "Ubiquiti_CL"
+  query = "union isfuzzy=true ${join(", ", [for k in keys(local.unifi_categories) : module.unifi_tables[k].name])}"
 }
 
 resource "azurerm_log_analytics_query_pack_query" "dcr_metrics" {
