@@ -13,6 +13,7 @@ locals {
 
 # Storage: serves the function runtime (AzureWebJobsStorage), the deployment zip
 # and the data blob. Public access stays off; access is via SAS.
+# TODO: migrate to the numbered naming standard (drop random suffix) — destructive, needs state migration.
 resource "azurerm_storage_account" "asn" {
   name                     = "stasn${local.location_short}${random_string.asn_suffix.result}"
   resource_group_name      = data.azurerm_resource_group.rg_log.name
@@ -62,6 +63,7 @@ resource "azurerm_storage_blob" "asn_last_modified_seed" {
 }
 
 # --- Key Vault holding the MaxMind license key -----------------------------
+# TODO: migrate to kv-asn-<loc>-001 standard — destructive (holds MaxMind secrets), needs migration.
 resource "azurerm_key_vault" "asn" {
   name                       = "kv-asn-${local.location_short}-${random_string.asn_suffix.result}"
   location                   = data.azurerm_resource_group.rg_log.location
@@ -186,6 +188,7 @@ resource "azurerm_application_insights" "asn" {
   tags                = var.tags
 }
 
+# TODO: migrate to func-asn-<loc>-001 standard — destructive, needs migration.
 resource "azurerm_windows_function_app" "asn" {
   name                       = "func-asn-${local.location_short}-${random_string.asn_suffix.result}"
   resource_group_name        = data.azurerm_resource_group.rg_log.name

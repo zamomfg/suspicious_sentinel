@@ -26,6 +26,16 @@ When adding new inputs:
 - Multi-line comments are very rare — only for genuine edge cases or code that
   otherwise looks wrong/surprising. Otherwise keep to a short single line, if any.
 
+## Resource naming
+All Azure resources follow the Azure standard
+`<resource-type-abbreviation>-<app/workload>-<location-short>-<instance>` —
+e.g. `kv-sops-neu-001`, `asp-asn-neu-001`, `func-asn-neu-001`.
+- Use the CAF resource-type abbreviation (kv, st, asp, func, appi, law, …) and a
+  numbered instance (`001`, `002`, …), not a random suffix.
+- Storage accounts are the exception (no hyphens, ≤24 chars): `st<app><loc><nn>`.
+- Globally-unique names (Key Vault, storage) rely on the app/workload token being
+  unique within the tenant.
+
 ## Terraform style
 - Prefer explicit resource blocks over `for_each`/`count` loops driven by
   `locals`/maps when the count is modest (roughly ≤10 resources) — explicit
