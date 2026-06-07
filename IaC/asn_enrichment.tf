@@ -9,6 +9,11 @@ resource "random_string" "asn_suffix" {
 
 locals {
   asn_blob_name = "GeoLite2-ASN-Blocks-IPv4.csv"
+
+  # Fixed SAS window so the token is stable across runs (timestamp() rotated it
+  # every plan, churning the function app and ft_asn_info).
+  sas_start  = "2024-01-01T00:00:00Z"
+  sas_expiry = "2035-01-01T00:00:00Z"
 }
 
 # Storage: serves the function runtime (AzureWebJobsStorage), the deployment zip
@@ -141,8 +146,8 @@ data "azurerm_storage_account_blob_container_sas" "asn_pkg" {
   connection_string = azurerm_storage_account.asn.primary_connection_string
   container_name    = azurerm_storage_container.asn_deployments.name
   https_only        = true
-  start             = timestamp()
-  expiry            = timeadd(timestamp(), "8760h") # 1 year
+  start             = local.sas_start
+  expiry            = local.sas_expiry
 
   permissions {
     read   = true
@@ -161,8 +166,8 @@ data "azurerm_storage_account_blob_container_sas" "asn_data_read" {
   connection_string = azurerm_storage_account.asn.primary_connection_string
   container_name    = azurerm_storage_container.asn_data.name
   https_only        = true
-  start             = timestamp()
-  expiry            = timeadd(timestamp(), "8760h") # 1 year
+  start             = local.sas_start
+  expiry            = local.sas_expiry
 
   permissions {
     read   = true
@@ -211,8 +216,8 @@ resource "azurerm_windows_function_app" "asn" {
   app_settings = {
     "APPLICATIONINSIGHTS_CONNECTION_STRING" = azurerm_application_insights.asn.connection_string
     "WEBSITE_RUN_FROM_PACKAGE"              = local.asn_pkg_url
-    "MAXMIND_ACCOUNT_ID"                    = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.maxmind_account.versionless_id})"
-    "MAXMIND_LICENSE_KEY"                   = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.maxmind.versionless_id})"
+    "MAXMIND_ACCOUNT_ID"                    = sensitive("@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.maxmind_account.versionless_id})")
+    "MAXMIND_LICENSE_KEY"                   = sensitive("@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.maxmind.versionless_id})")
     "AsnSchedule"                           = var.asn_refresh_cron
   }
 }
