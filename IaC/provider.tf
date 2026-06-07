@@ -32,7 +32,13 @@ terraform {
 
 provider "azurerm" {
   resource_provider_registrations = "none"
-  features {}
+  features {
+    # The CI SP can soft-delete a Key Vault but not purge it (subscription-scope
+    # action). Leave destroyed vaults soft-deleted instead of purging.
+    key_vault {
+      purge_soft_delete_on_destroy = false
+    }
+  }
   subscription_id     = var.subscription_id
   storage_use_azuread = true
 }
