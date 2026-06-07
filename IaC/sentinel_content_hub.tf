@@ -63,3 +63,18 @@ module "soc_handbook" {
     workbooks = true
   }
 }
+
+module "soc_process_framework" {
+  source = "./modules/content_hub"
+
+  log_analytics_workspace_id = azurerm_log_analytics_workspace.law.id
+  resource_group_name        = data.azurerm_resource_group.rg_log.name
+  workspace_name             = azurerm_log_analytics_workspace.law.name
+  location                   = data.azurerm_resource_group.rg_log.location
+  content_id                 = "azuresentinel.azure-sentinel-solution-socprocessframework"
+  solution_version           = "3.0.2"
+
+  install = {
+    workbooks = true
+  }
+}
