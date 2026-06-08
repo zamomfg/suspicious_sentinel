@@ -22,20 +22,3 @@ module "vlans" {
   log_analytics_workspace_id = azurerm_log_analytics_workspace.law.id
   encrypted_file_path        = "${local.watchlist_data_base_dir}vlans.csv"
 }
-
-moved {
-  from = azurerm_sentinel_watchlist.internal_hosts
-  to   = module.internal_hosts.azurerm_sentinel_watchlist.this
-}
-moved {
-  from = azurerm_sentinel_watchlist_item.internal_hosts
-  to   = module.internal_hosts.azurerm_sentinel_watchlist_item.this
-}
-moved {
-  from = azurerm_sentinel_watchlist.vlans
-  to   = module.vlans.azurerm_sentinel_watchlist.this
-}
-moved {
-  from = azurerm_sentinel_watchlist_item.vlans
-  to   = module.vlans.azurerm_sentinel_watchlist_item.this
-}
