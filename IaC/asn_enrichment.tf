@@ -221,3 +221,35 @@ resource "azurerm_windows_function_app" "asn" {
     "AsnSchedule"                           = var.asn_refresh_cron
   }
 }
+
+# Alert when the ASN enrichment function has a failed run.
+resource "azurerm_monitor_scheduled_query_rules_alert_v2" "asn_func_failures" {
+  name                = "asn-func-failures-${local.location_short}-001"
+  resource_group_name = data.azurerm_resource_group.rg_log.name
+  location            = data.azurerm_resource_group.rg_log.location
+
+  scopes               = [azurerm_log_analytics_workspace.law.id]
+  severity             = 2
+  evaluation_frequency = "PT1H"
+  window_duration      = "P1D"
+
+  criteria {
+    query                   = <<-QUERY
+      AppRequests
+      | where AppRoleName startswith "func-asn"
+      | where Success == false
+    QUERY
+    time_aggregation_method = "Count"
+    threshold               = 0
+    operator                = "GreaterThan"
+
+    failing_periods {
+      minimum_failing_periods_to_trigger_alert = 1
+      number_of_evaluation_periods             = 1
+    }
+  }
+
+  display_name = "ASN enrichment function failures"
+  description  = "Fires when the ASN enrichment function app has a failed run."
+  tags         = var.tags
+}

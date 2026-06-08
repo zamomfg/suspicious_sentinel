@@ -11,6 +11,18 @@ resource "azurerm_log_analytics_query_pack" "query_pack" {
   tags                = var.tags
 }
 
+resource "azurerm_log_analytics_query_pack_query" "asn_func_runs" {
+  query_pack_id = azurerm_log_analytics_query_pack.query_pack.id
+  display_name  = "${local.custom_query_prefix}asn_func_runs"
+
+  body = <<-EOT
+    AppRequests
+    | where AppRoleName startswith "func-asn"
+    | project TimeGenerated, FunctionName = Name, Success, ResultCode, DurationMs, OperationId
+    | order by TimeGenerated desc
+  EOT
+}
+
 # Aggregator parser for the Ubiquiti UniFi solution.
 #
 # We deliberately do NOT install the solution's own parser since we have set up parsing for the unifi events at transform time
