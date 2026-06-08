@@ -1,45 +1,24 @@
-
 variable "name" {
-  type = string
+  type        = string
+  description = "Watchlist name/alias (used by _GetWatchlist)."
 }
 
-variable "alias" {
-  type = string
+variable "display_name" {
+  type        = string
+  description = "Watchlist display name shown in the portal."
 }
 
-variable "description" {
-  type = string
-  default = ""
-}
-
-variable "watchlist_provider" {
-  type = string
-  default = ""
-}
-
-variable "itemsSearchKey" {
-  type = string
+variable "item_search_key" {
+  type        = string
+  description = "CSV column used as the watchlist search key."
 }
 
 variable "log_analytics_workspace_id" {
-  type = string
+  type        = string
+  description = "Resource ID of the Sentinel-enabled Log Analytics workspace."
 }
 
-variable "storage_account" {
-  type = object({
-    name = string
-    primary_connection_string = string
-  })
-}
-
-variable "storage_container_name" {
-  type = string
-}
-
-variable "file_name" {
-  type = string
-}
-
-variable "file_path" {
-  type = string
+variable "encrypted_file_path" {
+  type        = string
+  description = "Path to the SOPS-encrypted CSV (binary mode), decrypted at plan/apply via the sops provider."
 }
