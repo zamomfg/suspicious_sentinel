@@ -1,10 +1,13 @@
 data "sops_file" "this" {
-  source_file = var.encrypted_file_path
+  count       = var.encrypted ? 1 : 0
+  source_file = var.file_path
   input_type  = "raw"
 }
 
 locals {
-  rows = csvdecode(data.sops_file.this.raw)
+  rows = var.encrypted ? csvdecode(data.sops_file.this[0].raw) : csvdecode(file(var.file_path))
+  # count must be non-sensitive; the encrypted branch's rows are sensitive.
+  row_count = var.encrypted ? length(nonsensitive(local.rows)) : length(local.rows)
 }
 
 resource "azurerm_sentinel_watchlist" "this" {
@@ -14,10 +17,10 @@ resource "azurerm_sentinel_watchlist" "this" {
   item_search_key            = var.item_search_key
 }
 
-# Decrypted rows are sensitive; key items by index (not value) so nothing leaks
-# into the public CI plan output.
+# Items keyed by index; for encrypted sources the value is marked sensitive so
+# it never leaks into the public CI plan output.
 resource "azurerm_sentinel_watchlist_item" "this" {
-  count        = length(nonsensitive(local.rows))
+  count        = local.row_count
   watchlist_id = azurerm_sentinel_watchlist.this.id
-  properties   = sensitive(local.rows[count.index])
+  properties   = var.encrypted ? sensitive(local.rows[count.index]) : local.rows[count.index]
 }

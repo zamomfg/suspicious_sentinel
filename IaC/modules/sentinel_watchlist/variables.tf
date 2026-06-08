@@ -18,7 +18,13 @@ variable "log_analytics_workspace_id" {
   description = "Resource ID of the Sentinel-enabled Log Analytics workspace."
 }
 
-variable "encrypted_file_path" {
+variable "file_path" {
   type        = string
-  description = "Path to the SOPS-encrypted CSV (binary mode), decrypted at plan/apply via the sops provider."
+  description = "Path to the watchlist CSV. SOPS-encrypted (binary mode) when encrypted = true, plaintext otherwise."
+}
+
+variable "encrypted" {
+  type        = bool
+  default     = false
+  description = "When true, file_path is a SOPS-encrypted CSV: decrypted via the sops provider and the item values are marked sensitive."
 }
