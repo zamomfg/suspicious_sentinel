@@ -4,8 +4,9 @@
 # }
 
 # Per-table ingestion anomaly detection. A 14-day, 30-minute-binned time series per
-# table is decomposed (series_decompose_anomalies) so each source is judged against its
-# own learned seasonal baseline — tables that normally spike/dip do not false-positive.
+# table is decomposed (series_decompose_anomalies, weekly seasonality + linear trend) so
+# each source is judged against its own learned pattern — weekend/time-of-day dips and
+# steady growth are expected, not flagged.
 # Evaluation targets the 30-minute bins that closed within the last hour (the current bin
 # is partial and, given Usage-table lag, would read low). The rule runs hourly — Azure
 # requires queryFrequency >= 1h when queryPeriod >= 2 days — so each run covers both
@@ -33,10 +34,11 @@ resource "azurerm_sentinel_alert_rule_scheduled" "log_source_volume_drop" {
 
   query = <<-QUERY
     let endBin = bin(now(), 30m);
+    let weeklyPeriod = 24 * 14;
     Usage
     | where TimeGenerated >= ago(14d)
     | make-series Volume = sum(Quantity) default = 0.0 on TimeGenerated from endBin - 14d to endBin step 30m by DataType
-    | extend (flag, score, baseline) = series_decompose_anomalies(Volume, 1.5, -1, "linefit")
+    | extend (flag, score, baseline) = series_decompose_anomalies(Volume, 1.5, weeklyPeriod, "linefit")
     | mv-expand TimeGenerated to typeof(datetime), Volume to typeof(real), flag to typeof(long), score to typeof(real), baseline to typeof(real)
     | where TimeGenerated >= endBin - 1h and TimeGenerated < endBin
     | where flag == -1
@@ -69,10 +71,11 @@ resource "azurerm_sentinel_alert_rule_scheduled" "log_source_volume_spike" {
 
   query = <<-QUERY
     let endBin = bin(now(), 30m);
+    let weeklyPeriod = 24 * 14;
     Usage
     | where TimeGenerated >= ago(14d)
     | make-series Volume = sum(Quantity) default = 0.0 on TimeGenerated from endBin - 14d to endBin step 30m by DataType
-    | extend (flag, score, baseline) = series_decompose_anomalies(Volume, 1.5, -1, "linefit")
+    | extend (flag, score, baseline) = series_decompose_anomalies(Volume, 1.5, weeklyPeriod, "linefit")
     | mv-expand TimeGenerated to typeof(datetime), Volume to typeof(real), flag to typeof(long), score to typeof(real), baseline to typeof(real)
     | where TimeGenerated >= endBin - 1h and TimeGenerated < endBin
     | where flag == 1
