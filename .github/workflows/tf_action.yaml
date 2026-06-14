@@ -20,7 +20,6 @@ env:
   TF_VAR_current_sp_id: ${{ secrets.AZURE_CLIENT_ID }} # Used for getting the id of the current SP
   TF_VAR_maxmind_account_id: ${{ secrets.MAXMIND_ACCOUNT_ID }} # MaxMind account ID (add as a repo/environment secret)
   TF_VAR_maxmind_license_key: ${{ secrets.MAXMIND_LICENSE_KEY }} # MaxMind GeoLite2 license key (add as a repo/environment secret)
-  TF_VAR_sentinel_automation_sp_object_id: ${{ secrets.SENTINEL_AUTOMATION_SP_OBJECT_ID }} # Optional: Azure Security Insights SP object id, to grant playbook run permission
   TF_LOG: ${{ vars.DEBUG_LEVEL }}
 
 jobs:

@@ -181,33 +181,23 @@ resource "azapi_resource" "discord_playbook" {
   }
 }
 
-# Playbook identity reads the webhook secret...
+# Playbook identity reads the webhook secret from Key Vault.
 resource "azurerm_role_assignment" "playbook_kv_reader" {
   scope                = azurerm_key_vault.soc.id
   role_definition_name = "Key Vault Secrets User"
   principal_id         = azurerm_user_assigned_identity.playbook.principal_id
 }
 
-# ...and needs Sentinel access for the incident-trigger connection.
-resource "azurerm_role_assignment" "playbook_sentinel_responder" {
-  scope                = data.azurerm_resource_group.rg_log.id
-  role_definition_name = "Microsoft Sentinel Responder"
-  principal_id         = azurerm_user_assigned_identity.playbook.principal_id
-}
-
-# Lets Sentinel automation rules run the playbook. Optional: only created when the
-# Azure Security Insights SP object id is supplied; otherwise grant via the portal.
-resource "azurerm_role_assignment" "sentinel_run_playbook" {
-  count                = var.sentinel_automation_sp_object_id == null || var.sentinel_automation_sp_object_id == "" ? 0 : 1
-  scope                = data.azurerm_resource_group.rg_log.id
-  role_definition_name = "Microsoft Sentinel Automation Contributor"
-  principal_id         = var.sentinel_automation_sp_object_id
-}
-
 # --- Automation rule: run the playbook on every incident -------------------
+# Prerequisite (one-time, manual): Microsoft Sentinel's service principal must be able
+# to run the playbook. The CI identity is ABAC-restricted from assigning Sentinel roles,
+# so grant it in the portal: Microsoft Sentinel -> Settings -> Manage playbook permissions
+# -> add rg-log. Then set enable_discord_automation = true. Creating the rule before the
+# grant exists fails with "Missing required permissions for Microsoft Sentinel".
 resource "random_uuid" "discord_automation" {}
 
 resource "azurerm_sentinel_automation_rule" "discord_all_incidents" {
+  count                      = var.enable_discord_automation ? 1 : 0
   name                       = random_uuid.discord_automation.result
   log_analytics_workspace_id = azurerm_log_analytics_workspace.law.id
   display_name               = "Notify Discord on all incidents"
