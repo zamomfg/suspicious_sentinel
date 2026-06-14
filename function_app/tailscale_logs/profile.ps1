@@ -19,12 +19,17 @@ function Get-TailscaleAccessToken {
     param([string]$ClientId)
     if ([string]::IsNullOrWhiteSpace($ClientId)) { throw "TailscaleClientId is not set." }
 
-    # The audience Tailscale expects is the API host plus the federated client id.
-    $audience = "api.tailscale.com/$ClientId"
+    $audience = "api://AzureADTokenExchange"
 
     # Mint an Entra OIDC JWT for this app's managed identity, scoped to that audience.
     $miUri = "$($env:IDENTITY_ENDPOINT)?resource=$([uri]::EscapeDataString($audience))&api-version=2019-08-01"
     $miResp = Invoke-RestMethod -Uri $miUri -Headers @{ "X-IDENTITY-HEADER" = $env:IDENTITY_HEADER } -Method Get
+
+    # TEMP: log token iss/aud/sub to match the Tailscale federated identity. Remove after.
+    $p = $miResp.access_token.Split('.')[1].Replace('-', '+').Replace('_', '/')
+    switch ($p.Length % 4) { 2 { $p += '==' } 3 { $p += '=' } }
+    $claims = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($p)) | ConvertFrom-Json
+    Write-Host "MI token claims: iss=$($claims.iss) aud=$($claims.aud) sub=$($claims.sub)"
 
     # Trade the JWT for a Tailscale API token.
     $resp = Invoke-RestMethod -Uri "https://api.tailscale.com/api/v2/oauth/token-exchange" -Method Post -Body @{
