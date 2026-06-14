@@ -47,6 +47,53 @@ module "table_ubiquiti" {
   table_struct_file_path = "${local.struct_declaration_path}/Ubiquiti_CL_struct.json"
 }
 
+# Tailscale network + configuration-audit logs, ingested by func-tailscale via
+# the Logs Ingestion API (tailscale_logs.tf, dcr-tailscale in log_dcr.tf).
+module "tailscale_table" {
+  source = "./modules/law_table"
+
+  name             = "TailscaleNetworkLogs_CL"
+  law_workspace_id = azurerm_log_analytics_workspace.law.id
+
+  retention_in_days    = 90
+  totalRetentionInDays = 90
+
+  columns = [
+    { name = "TimeGenerated", type = "datetime" },
+    { name = "NodeId", type = "string" },
+    { name = "Start", type = "datetime" },
+    { name = "End", type = "datetime" },
+    { name = "Logged", type = "datetime" },
+    { name = "VirtualTraffic", type = "dynamic" },
+    { name = "PhysicalTraffic", type = "dynamic" },
+    { name = "ExitTraffic", type = "dynamic" },
+    { name = "SubnetTraffic", type = "dynamic" },
+  ]
+}
+
+module "tailscale_audit_table" {
+  source = "./modules/law_table"
+
+  name             = "TailscaleAuditLogs_CL"
+  law_workspace_id = azurerm_log_analytics_workspace.law.id
+
+  retention_in_days    = 90
+  totalRetentionInDays = 90
+
+  columns = [
+    { name = "TimeGenerated", type = "datetime" },
+    { name = "EventTime", type = "datetime" },
+    { name = "EventGroupID", type = "string" },
+    { name = "Action", type = "string" },
+    { name = "Actor", type = "dynamic" },
+    { name = "Target", type = "dynamic" },
+    { name = "Origin", type = "string" },
+    { name = "Type", type = "string" },
+    { name = "Old", type = "dynamic" },
+    { name = "New", type = "dynamic" },
+  ]
+}
+
 # One tailored _CL table per UniFi log category. Driven by local.unifi_categories
 # (log_dcr.tf); each table's schema is the common columns plus the category's
 # entry in local.unifi_category_extra_columns above.

@@ -313,3 +313,53 @@ module "dcr_unifi" {
 
   logging_workspace_id = azurerm_log_analytics_workspace.law.id
 }
+
+# Direct-ingestion endpoint + rule for the Tailscale logs pushed by func-tailscale
+# (tailscale_logs.tf). Streams map to the TailscaleNetworkLogs_CL / TailscaleAuditLogs_CL
+# tables defined in log_tables.tf.
+resource "azurerm_monitor_data_collection_endpoint" "tailscale" {
+  name                = "dce-tailscale-${local.location_short}-001"
+  resource_group_name = data.azurerm_resource_group.rg_log.name
+  location            = data.azurerm_resource_group.rg_log.location
+  tags                = var.tags
+}
+
+module "tailscale_dcr" {
+  source = "./modules/dcr"
+
+  name                = "dcr-tailscale-${local.location_short}-001"
+  resource_group_name = data.azurerm_resource_group.rg_log.name
+  location            = data.azurerm_resource_group.rg_log.location
+  tags                = var.tags
+
+  data_collection_endpoint_id   = azurerm_monitor_data_collection_endpoint.tailscale.id
+  law_destinations_workspace_id = [azurerm_log_analytics_workspace.law.id]
+  data_sources_syslog           = []
+  logging_workspace_id          = azurerm_log_analytics_workspace.law.id
+
+  stream_declarations = [
+    {
+      stream_name   = local.tailscale_network_stream_name
+      column_schema = module.tailscale_table.column_schema
+    },
+    {
+      stream_name   = local.tailscale_audit_stream_name
+      column_schema = module.tailscale_audit_table.column_schema
+    },
+  ]
+
+  data_flows = [
+    {
+      streams       = [local.tailscale_network_stream_name]
+      destinations  = [azurerm_log_analytics_workspace.law.id]
+      transform_kql = "source"
+      output_stream = "Custom-TailscaleNetworkLogs_CL"
+    },
+    {
+      streams       = [local.tailscale_audit_stream_name]
+      destinations  = [azurerm_log_analytics_workspace.law.id]
+      transform_kql = "source"
+      output_stream = "Custom-TailscaleAuditLogs_CL"
+    },
+  ]
+}

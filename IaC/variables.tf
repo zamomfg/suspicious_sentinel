@@ -42,6 +42,18 @@ variable "asn_refresh_cron" {
   description = "NCRONTAB schedule for the ASN feed refresh (default: daily at 03:00 UTC)."
 }
 
+variable "tailscale_tailnet" {
+  type        = string
+  sensitive   = true
+  description = "Tailscale tailnet (org) to pull network logs from, e.g. example.com. Supplied via TF_VAR_tailscale_tailnet (GitHub Actions secret); identifying, so kept out of the repo."
+}
+
+variable "tailscale_log_interval_minutes" {
+  type        = number
+  default     = 5
+  description = "Minutes between Tailscale network-log pulls; also the query window size (start = now - interval, end = now)."
+}
+
 variable "security_insights_object_id" {
   type        = string
   sensitive   = true
