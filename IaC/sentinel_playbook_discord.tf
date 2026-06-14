@@ -198,7 +198,7 @@ resource "azurerm_role_assignment" "playbook_sentinel_responder" {
 # Lets Sentinel automation rules run the playbook. Optional: only created when the
 # Azure Security Insights SP object id is supplied; otherwise grant via the portal.
 resource "azurerm_role_assignment" "sentinel_run_playbook" {
-  count                = coalesce(var.sentinel_automation_sp_object_id, "") == "" ? 0 : 1
+  count                = var.sentinel_automation_sp_object_id == null || var.sentinel_automation_sp_object_id == "" ? 0 : 1
   scope                = data.azurerm_resource_group.rg_log.id
   role_definition_name = "Microsoft Sentinel Automation Contributor"
   principal_id         = var.sentinel_automation_sp_object_id
