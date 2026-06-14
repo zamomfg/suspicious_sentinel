@@ -42,10 +42,10 @@ variable "asn_refresh_cron" {
   description = "NCRONTAB schedule for the ASN feed refresh (default: daily at 03:00 UTC)."
 }
 
-variable "enable_discord_automation" {
-  type        = bool
-  default     = false
-  description = "Create the Sentinel automation rule that runs the Discord playbook on every incident. Set true only after granting Sentinel 'Manage playbook permissions' on rg-log, otherwise rule creation fails."
+variable "security_insights_object_id" {
+  type        = string
+  sensitive   = true
+  description = "Object ID of the 'Azure Security Insights' service principal in this tenant. Granted Microsoft Sentinel Automation Contributor on rg-log so automation rules can run the playbook. Supplied via TF_VAR_security_insights_object_id (GitHub Actions secret)."
 }
 
 locals {

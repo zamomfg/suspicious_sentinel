@@ -188,16 +188,21 @@ resource "azurerm_role_assignment" "playbook_kv_reader" {
   principal_id         = azurerm_user_assigned_identity.playbook.principal_id
 }
 
+# Grant Microsoft Sentinel's service principal permission to run playbooks in rg-log,
+# so the automation rule can invoke this playbook. Equivalent to the portal's
+# "Manage playbook permissions". Gated on the object id being supplied.
+resource "azurerm_role_assignment" "sentinel_run_playbook" {
+  scope                = data.azurerm_resource_group.rg_log.id
+  role_definition_name = "Microsoft Sentinel Automation Contributor"
+  principal_id         = var.security_insights_object_id
+}
+
 # --- Automation rule: run the playbook on every incident -------------------
-# Prerequisite (one-time, manual): Microsoft Sentinel's service principal must be able
-# to run the playbook. The CI identity is ABAC-restricted from assigning Sentinel roles,
-# so grant it in the portal: Microsoft Sentinel -> Settings -> Manage playbook permissions
-# -> add rg-log. Then set enable_discord_automation = true. Creating the rule before the
-# grant exists fails with "Missing required permissions for Microsoft Sentinel".
+# Requires the grant above (or the equivalent portal grant) to already exist, else
+# creation fails with "Missing required permissions for Microsoft Sentinel".
 resource "random_uuid" "discord_automation" {}
 
 resource "azurerm_sentinel_automation_rule" "discord_all_incidents" {
-  count                      = var.enable_discord_automation ? 1 : 0
   name                       = random_uuid.discord_automation.result
   log_analytics_workspace_id = azurerm_log_analytics_workspace.law.id
   display_name               = "Notify Discord on all incidents"
@@ -211,5 +216,8 @@ resource "azurerm_sentinel_automation_rule" "discord_all_incidents" {
     tenant_id    = data.azurerm_client_config.current.tenant_id
   }
 
-  depends_on = [azurerm_sentinel_log_analytics_workspace_onboarding.sentinel]
+  depends_on = [
+    azurerm_sentinel_log_analytics_workspace_onboarding.sentinel,
+    azurerm_role_assignment.sentinel_run_playbook,
+  ]
 }
