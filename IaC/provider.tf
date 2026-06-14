@@ -21,14 +21,6 @@ terraform {
       source  = "carlpett/sops"
       version = "~> 1.0"
     }
-    msgraph = {
-      source  = "microsoft/msgraph"
-      version = ">= 0.1.0"
-    }
-    azuread = {
-      source  = "hashicorp/azuread"
-      version = "~> 3.0"
-    }
   }
 
   backend "azurerm" {
@@ -54,7 +46,3 @@ provider "azurerm" {
 provider "azapi" {
   subscription_id = var.subscription_id
 }
-
-provider "msgraph" {}
-
-provider "azuread" {}
