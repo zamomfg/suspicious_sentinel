@@ -48,6 +48,12 @@ variable "tailscale_tailnet" {
   description = "Tailscale tailnet (org) to pull network logs from, e.g. example.com. Supplied via TF_VAR_tailscale_tailnet (GitHub Actions secret); identifying, so kept out of the repo."
 }
 
+variable "tailscale_client_id" {
+  type        = string
+  sensitive   = true
+  description = "Tailscale workload-identity-federation client id. Supplied via TF_VAR_tailscale_client_id (GitHub Actions secret)."
+}
+
 variable "tailscale_log_interval_minutes" {
   type        = number
   default     = 5

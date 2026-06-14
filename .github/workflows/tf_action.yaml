@@ -22,6 +22,7 @@ env:
   TF_VAR_maxmind_license_key: ${{ secrets.MAXMIND_LICENSE_KEY }} # MaxMind GeoLite2 license key (add as a repo/environment secret)
   TF_VAR_security_insights_object_id: ${{ secrets.AZURE_SECURITY_INSIGHTS_OBJECT_ID }} # Object id of the Azure Security Insights SP, to grant playbook run permission
   TF_VAR_tailscale_tailnet: ${{ secrets.TAILNET_ID }} # Tailscale tailnet to pull logs from (identifying; add as a repo/environment secret)
+  TF_VAR_tailscale_client_id: ${{ secrets.TAILSCALE_CLIENT_ID }} # Tailscale WIF federated client id (audience = api.tailscale.com/<client id>)
   TF_LOG: ${{ vars.DEBUG_LEVEL }}
 
 jobs:

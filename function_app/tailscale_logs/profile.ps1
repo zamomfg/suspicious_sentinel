@@ -12,23 +12,43 @@ function Get-TailscaleTimeWindow {
     }
 }
 
-# Pull logs from a Tailscale API path. Auth is HTTP Basic with the access token
-# as the username and an empty password (the curl `-u "$TOKEN:"` form). Returns
-# the `logs` array from the response.
+# Exchange the function's managed-identity OIDC token for a short-lived Tailscale
+# API token via workload identity federation — no stored secret.
+# https://tailscale.com/docs/features/workload-identity-federation
+function Get-TailscaleAccessToken {
+    param([string]$ClientId)
+    if ([string]::IsNullOrWhiteSpace($ClientId)) { throw "TailscaleClientId is not set." }
+
+    # The audience Tailscale expects is the API host plus the federated client id.
+    $audience = "api.tailscale.com/$ClientId"
+
+    # Mint an Entra OIDC JWT for this app's managed identity, scoped to that audience.
+    $miUri = "$($env:IDENTITY_ENDPOINT)?resource=$([uri]::EscapeDataString($audience))&api-version=2019-08-01"
+    $miResp = Invoke-RestMethod -Uri $miUri -Headers @{ "X-IDENTITY-HEADER" = $env:IDENTITY_HEADER } -Method Get
+
+    # Trade the JWT for a Tailscale API token.
+    $resp = Invoke-RestMethod -Uri "https://api.tailscale.com/api/v2/oauth/token-exchange" -Method Post -Body @{
+        client_id = $ClientId
+        jwt       = $miResp.access_token
+    }
+    return $resp.access_token
+}
+
+# Pull logs from a Tailscale API path using a bearer access token. Returns the
+# `logs` array from the response.
 function Get-TailscaleLogs {
     param(
         [string]$Tailnet,
-        [string]$Token,
+        [string]$AccessToken,
         [string]$Path,
         [string]$Start,
         [string]$End
     )
     if ([string]::IsNullOrWhiteSpace($Tailnet)) { throw "TailscaleTailnet is not set." }
-    if ([string]::IsNullOrWhiteSpace($Token)) { throw "TailscaleAccessToken is not set." }
+    if ([string]::IsNullOrWhiteSpace($AccessToken)) { throw "Tailscale access token is empty." }
 
-    $basic = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes("${Token}:"))
-    $uri   = "https://api.tailscale.com/api/v2/tailnet/$Tailnet/$Path" + "?start=$Start&end=$End"
-    $resp  = Invoke-RestMethod -Uri $uri -Headers @{ Authorization = "Basic $basic" } -Method Get
+    $uri  = "https://api.tailscale.com/api/v2/tailnet/$Tailnet/$Path" + "?start=$Start&end=$End"
+    $resp = Invoke-RestMethod -Uri $uri -Headers @{ Authorization = "Bearer $AccessToken" } -Method Get
     return @($resp.logs)
 }
 

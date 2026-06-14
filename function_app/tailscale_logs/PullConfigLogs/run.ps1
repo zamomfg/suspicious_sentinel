@@ -4,12 +4,14 @@ $ErrorActionPreference = 'Stop'
 
 $window = Get-TailscaleTimeWindow -Minutes ([int]$env:TailscaleLookbackMinutes)
 
+$accessToken = Get-TailscaleAccessToken -ClientId $env:TailscaleClientId
+
 $logs = Get-TailscaleLogs `
-    -Tailnet $env:TailscaleTailnet `
-    -Token   $env:TailscaleAccessToken `
-    -Path    "logging/configuration" `
-    -Start   $window.Start `
-    -End     $window.End
+    -Tailnet     $env:TailscaleTailnet `
+    -AccessToken $accessToken `
+    -Path        "logging/configuration" `
+    -Start       $window.Start `
+    -End         $window.End
 
 $records = foreach ($l in $logs) {
     [ordered]@{
