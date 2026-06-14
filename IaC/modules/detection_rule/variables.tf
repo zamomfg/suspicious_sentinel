@@ -91,6 +91,7 @@ variable "impacted_assets" {
     odata_type = string
     identifier = optional(string)
   }))
+  default = []
 
   validation {
     condition = alltrue([

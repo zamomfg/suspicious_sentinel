@@ -11,15 +11,9 @@ module "log_source_volume_drop" {
   schedule_period   = "1H"
 
   metadata = {
-    author = "Zamomfg"
+    author  = "Zamomfg"
     website = "https://github.com/zamomfg"
   }
-
-  impacted_assets = [
-    {
-      odata_type = "impactedAzureResourceAsset"
-    }
-  ]
 
   query_text = <<-KQL
     let weeklyPeriod = 24 * 14;
@@ -49,12 +43,6 @@ module "log_source_volume_spike" {
   severity          = "low"
   category          = "SuspiciousActivity"
   schedule_period   = "1H"
-
-  impacted_assets = [
-    {
-      odata_type = "impactedAzureResourceAsset"
-    }
-  ]
 
   query_text = <<-KQL
     let weeklyPeriod = 24 * 14;
