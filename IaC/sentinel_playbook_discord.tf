@@ -442,6 +442,17 @@ resource "azurerm_sentinel_automation_rule" "discord_incident_updated" {
   triggers_on                = "Incidents"
   triggers_when              = "Updated"
 
+  # Update-trigger rules must declare a change condition; fire only when alerts are added.
+  condition_json = jsonencode([
+    {
+      conditionType = "PropertyArrayChanged"
+      conditionProperties = {
+        arrayType  = "Alerts"
+        changeType = "Added"
+      }
+    }
+  ])
+
   action_playbook {
     logic_app_id = azapi_resource.discord_playbook.id
     order        = 1
