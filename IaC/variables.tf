@@ -42,6 +42,13 @@ variable "asn_refresh_cron" {
   description = "NCRONTAB schedule for the ASN feed refresh (default: daily at 03:00 UTC)."
 }
 
+variable "sentinel_automation_sp_object_id" {
+  type        = string
+  default     = null
+  sensitive   = true
+  description = "Object ID of the 'Azure Security Insights' service principal in this tenant. When set, Terraform grants it Microsoft Sentinel Automation Contributor on rg-log so the automation rule can run the playbook. Leave unset to grant playbook permissions manually in the Sentinel portal."
+}
+
 locals {
   location_short = lookup(
     {
