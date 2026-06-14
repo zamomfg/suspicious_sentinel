@@ -62,6 +62,30 @@ resource "azapi_resource" "sentinel_connection" {
   }
 }
 
+# --- Key Vault managed connection (managed-identity auth) ------------------
+resource "azapi_resource" "keyvault_connection" {
+  type      = "Microsoft.Web/connections@2016-06-01"
+  name      = azurerm_key_vault.soc.name
+  location  = data.azurerm_resource_group.rg_log.location
+  parent_id = data.azurerm_resource_group.rg_log.id
+  tags      = var.tags
+
+  schema_validation_enabled = false
+
+  body = {
+    properties = {
+      displayName        = "keyvault"
+      parameterValueType = "Alternative"
+      alternativeParameterValues = {
+        vaultName = azurerm_key_vault.soc.name
+      }
+      api = {
+        id = "/subscriptions/${var.subscription_id}/providers/Microsoft.Web/locations/${data.azurerm_resource_group.rg_log.location}/managedApis/keyvault"
+      }
+    }
+  }
+}
+
 # --- Playbook (Logic App) ---------------------------------------------------
 resource "azapi_resource" "discord_playbook" {
   type      = "Microsoft.Logic/workflows@2019-05-01"
@@ -107,15 +131,15 @@ resource "azapi_resource" "discord_playbook" {
         }
         actions = {
           Get_webhook_url = {
-            type = "Http"
+            type = "ApiConnection"
             inputs = {
-              method = "GET"
-              uri    = "${azurerm_key_vault.soc.vault_uri}secrets/discord-webhook-url?api-version=7.4"
-              authentication = {
-                type     = "ManagedServiceIdentity"
-                identity = azurerm_user_assigned_identity.playbook.id
-                audience = "https://vault.azure.net"
+              host = {
+                connection = {
+                  name = "@parameters('$connections')['keyvault']['connectionId']"
+                }
               }
+              method = "get"
+              path   = "/secrets/@{encodeURIComponent('discord-webhook-url')}/value"
             }
             runtimeConfiguration = {
               secureData = {
@@ -167,6 +191,17 @@ resource "azapi_resource" "discord_playbook" {
               connectionId   = azapi_resource.sentinel_connection.id
               connectionName = "azuresentinel"
               id             = "/subscriptions/${var.subscription_id}/providers/Microsoft.Web/locations/${data.azurerm_resource_group.rg_log.location}/managedApis/azuresentinel"
+              connectionProperties = {
+                authentication = {
+                  type     = "ManagedServiceIdentity"
+                  identity = azurerm_user_assigned_identity.playbook.id
+                }
+              }
+            }
+            keyvault = {
+              connectionId   = azapi_resource.keyvault_connection.id
+              connectionName = "keyvault"
+              id             = "/subscriptions/${var.subscription_id}/providers/Microsoft.Web/locations/${data.azurerm_resource_group.rg_log.location}/managedApis/keyvault"
               connectionProperties = {
                 authentication = {
                   type     = "ManagedServiceIdentity"
