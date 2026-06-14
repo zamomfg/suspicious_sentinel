@@ -1,7 +1,10 @@
 
 # Sentinel -> Discord notification playbook.
-# An automation rule runs this Logic App on every incident; the playbook reads the
-# Discord webhook URL from Key Vault (via its managed identity) and posts the incident.
+# Automation rules run this Logic App on incident create and update. The playbook creates
+# one Discord forum post per incident (storing the thread id + alert count as incident
+# labels) and adds a comment to that post when new alerts join the incident. The webhook
+# URL is read from Key Vault via the playbook's managed identity. The webhook MUST belong
+# to a Discord forum/media channel (forum posts require thread_name).
 
 # Dedicated identity the playbook runs as — used for both the Sentinel connection
 # and the Key Vault read. User-assigned so its roles exist before the playbook runs.
@@ -147,62 +150,202 @@ resource "azapi_resource" "discord_playbook" {
               }
             }
           }
-          Post_to_Discord = {
-            type     = "Http"
+          Find_thread_label = {
+            type     = "Query"
             runAfter = { Get_webhook_url = ["Succeeded"] }
             inputs = {
-              method = "POST"
-              uri    = "@{body('Get_webhook_url')['value']}"
-              headers = {
-                "Content-Type" = "application/json"
+              from  = "@coalesce(triggerBody()?['object']?['properties']?['labels'], json('[]'))"
+              where = "@startsWith(item()?['labelName'], 'discord-thread:')"
+            }
+          }
+          Route_incident = {
+            type     = "If"
+            runAfter = { Find_thread_label = ["Succeeded"] }
+            expression = {
+              and = [
+                {
+                  greater = ["@length(body('Find_thread_label'))", 0]
+                }
+              ]
+            }
+            # Thread already exists -> comment, but only when new alerts joined.
+            actions = {
+              Find_count_labels = {
+                type = "Query"
+                inputs = {
+                  from  = "@coalesce(triggerBody()?['object']?['properties']?['labels'], json('[]'))"
+                  where = "@startsWith(item()?['labelName'], 'discord-count:')"
+                }
               }
-              body = {
-                username = "Microsoft Sentinel"
-                content  = "🚨 **Incident #@{triggerBody()?['object']?['properties']?['incidentNumber']}: @{triggerBody()?['object']?['properties']?['title']}**"
-                embeds = [
-                  {
-                    title       = "@{triggerBody()?['object']?['properties']?['title']}"
-                    description = "@{triggerBody()?['object']?['properties']?['description']}"
-                    url         = "@{triggerBody()?['object']?['properties']?['incidentUrl']}"
-                    color       = 15158332
-                    timestamp   = "@{triggerBody()?['object']?['properties']?['createdTimeUtc']}"
-                    footer = {
-                      text = "@{triggerBody()?['object']?['properties']?['providerName']} · Incident #@{triggerBody()?['object']?['properties']?['incidentNumber']}"
+              Select_counts = {
+                type     = "Select"
+                runAfter = { Find_count_labels = ["Succeeded"] }
+                inputs = {
+                  from   = "@body('Find_count_labels')"
+                  select = "@int(last(split(item()?['labelName'], ':')))"
+                }
+              }
+              Check_new_alerts = {
+                type     = "If"
+                runAfter = { Select_counts = ["Succeeded"] }
+                expression = {
+                  and = [
+                    {
+                      greater = [
+                        "@coalesce(triggerBody()?['object']?['properties']?['additionalData']?['alertsCount'], 0)",
+                        "@if(empty(body('Select_counts')), 0, max(body('Select_counts')))"
+                      ]
                     }
-                    fields = [
-                      {
-                        name   = "Severity"
-                        value  = "@{triggerBody()?['object']?['properties']?['severity']}"
-                        inline = true
-                      },
-                      {
-                        name   = "Status"
-                        value  = "@{triggerBody()?['object']?['properties']?['status']}"
-                        inline = true
-                      },
-                      {
-                        name   = "Owner"
-                        value  = "@{coalesce(triggerBody()?['object']?['properties']?['owner']?['assignedTo'], 'Unassigned')}"
-                        inline = true
-                      },
-                      {
-                        name   = "Alerts"
-                        value  = "@{coalesce(triggerBody()?['object']?['properties']?['additionalData']?['alertsCount'], 0)}"
-                        inline = true
-                      },
-                      {
-                        name   = "Tactics"
-                        value  = "@{if(empty(triggerBody()?['object']?['properties']?['additionalData']?['tactics']), 'None', join(triggerBody()?['object']?['properties']?['additionalData']?['tactics'], ', '))}"
-                        inline = true
-                      },
-                      {
-                        name   = "Products"
-                        value  = "@{if(empty(triggerBody()?['object']?['properties']?['additionalData']?['alertProductNames']), 'N/A', join(triggerBody()?['object']?['properties']?['additionalData']?['alertProductNames'], ', '))}"
-                        inline = true
+                  ]
+                }
+                actions = {
+                  Comment_on_post = {
+                    type = "Http"
+                    inputs = {
+                      method = "POST"
+                      uri    = "@{body('Get_webhook_url')?['value']}?thread_id=@{last(split(first(body('Find_thread_label'))?['labelName'], ':'))}"
+                      headers = {
+                        "Content-Type" = "application/json"
                       }
-                    ]
+                      body = {
+                        embeds = [
+                          {
+                            title       = "New alert(s) — incident now has @{coalesce(triggerBody()?['object']?['properties']?['additionalData']?['alertsCount'], 0)} alert(s)"
+                            description = "Status: @{triggerBody()?['object']?['properties']?['status']} · Severity: @{triggerBody()?['object']?['properties']?['severity']}"
+                            url         = "@{triggerBody()?['object']?['properties']?['incidentUrl']}"
+                            color       = 15844367
+                            timestamp   = "@{triggerBody()?['object']?['properties']?['lastModifiedTimeUtc']}"
+                            fields = [
+                              {
+                                name   = "Products"
+                                value  = "@{if(empty(triggerBody()?['object']?['properties']?['additionalData']?['alertProductNames']), 'N/A', join(triggerBody()?['object']?['properties']?['additionalData']?['alertProductNames'], ', '))}"
+                                inline = true
+                              },
+                              {
+                                name   = "Tactics"
+                                value  = "@{if(empty(triggerBody()?['object']?['properties']?['additionalData']?['tactics']), 'None', join(triggerBody()?['object']?['properties']?['additionalData']?['tactics'], ', '))}"
+                                inline = true
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    }
                   }
-                ]
+                  Update_count_label = {
+                    type     = "ApiConnection"
+                    runAfter = { Comment_on_post = ["Succeeded"] }
+                    inputs = {
+                      host = {
+                        connection = {
+                          name = "@parameters('$connections')['azuresentinel']['connectionId']"
+                        }
+                      }
+                      method = "put"
+                      path   = "/Incidents"
+                      body = {
+                        incidentArmId = "@triggerBody()?['object']?['id']"
+                        tagsToAdd = {
+                          TagsToAdd = [
+                            {
+                              Tag = "discord-count:@{coalesce(triggerBody()?['object']?['properties']?['additionalData']?['alertsCount'], 0)}"
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            # First time for this incident -> create the forum post and store its thread id.
+            else = {
+              actions = {
+                Create_forum_post = {
+                  type = "Http"
+                  inputs = {
+                    method = "POST"
+                    uri    = "@{body('Get_webhook_url')?['value']}?wait=true"
+                    headers = {
+                      "Content-Type" = "application/json"
+                    }
+                    body = {
+                      username    = "Microsoft Sentinel"
+                      thread_name = "Incident #@{triggerBody()?['object']?['properties']?['incidentNumber']}: @{triggerBody()?['object']?['properties']?['title']}"
+                      content     = "🚨 **Incident #@{triggerBody()?['object']?['properties']?['incidentNumber']}: @{triggerBody()?['object']?['properties']?['title']}**"
+                      embeds = [
+                        {
+                          title       = "@{triggerBody()?['object']?['properties']?['title']}"
+                          description = "@{triggerBody()?['object']?['properties']?['description']}"
+                          url         = "@{triggerBody()?['object']?['properties']?['incidentUrl']}"
+                          color       = 15158332
+                          timestamp   = "@{triggerBody()?['object']?['properties']?['createdTimeUtc']}"
+                          footer = {
+                            text = "@{triggerBody()?['object']?['properties']?['providerName']} · Incident #@{triggerBody()?['object']?['properties']?['incidentNumber']}"
+                          }
+                          fields = [
+                            {
+                              name   = "Severity"
+                              value  = "@{triggerBody()?['object']?['properties']?['severity']}"
+                              inline = true
+                            },
+                            {
+                              name   = "Status"
+                              value  = "@{triggerBody()?['object']?['properties']?['status']}"
+                              inline = true
+                            },
+                            {
+                              name   = "Owner"
+                              value  = "@{coalesce(triggerBody()?['object']?['properties']?['owner']?['assignedTo'], 'Unassigned')}"
+                              inline = true
+                            },
+                            {
+                              name   = "Alerts"
+                              value  = "@{coalesce(triggerBody()?['object']?['properties']?['additionalData']?['alertsCount'], 0)}"
+                              inline = true
+                            },
+                            {
+                              name   = "Tactics"
+                              value  = "@{if(empty(triggerBody()?['object']?['properties']?['additionalData']?['tactics']), 'None', join(triggerBody()?['object']?['properties']?['additionalData']?['tactics'], ', '))}"
+                              inline = true
+                            },
+                            {
+                              name   = "Products"
+                              value  = "@{if(empty(triggerBody()?['object']?['properties']?['additionalData']?['alertProductNames']), 'N/A', join(triggerBody()?['object']?['properties']?['additionalData']?['alertProductNames'], ', '))}"
+                              inline = true
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                }
+                Store_thread_label = {
+                  type     = "ApiConnection"
+                  runAfter = { Create_forum_post = ["Succeeded"] }
+                  inputs = {
+                    host = {
+                      connection = {
+                        name = "@parameters('$connections')['azuresentinel']['connectionId']"
+                      }
+                    }
+                    method = "put"
+                    path   = "/Incidents"
+                    body = {
+                      incidentArmId = "@triggerBody()?['object']?['id']"
+                      tagsToAdd = {
+                        TagsToAdd = [
+                          {
+                            Tag = "discord-thread:@{body('Create_forum_post')?['channel_id']}"
+                          },
+                          {
+                            Tag = "discord-count:@{coalesce(triggerBody()?['object']?['properties']?['additionalData']?['alertsCount'], 0)}"
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
               }
             }
           }
@@ -247,6 +390,13 @@ resource "azurerm_role_assignment" "playbook_kv_reader" {
   principal_id         = azurerm_user_assigned_identity.playbook.principal_id
 }
 
+# Playbook identity writes the thread-id / alert-count labels back onto the incident.
+resource "azurerm_role_assignment" "playbook_sentinel_responder" {
+  scope                = data.azurerm_resource_group.rg_log.id
+  role_definition_name = "Microsoft Sentinel Responder"
+  principal_id         = azurerm_user_assigned_identity.playbook.principal_id
+}
+
 # Grant Microsoft Sentinel's service principal permission to run playbooks in rg-log,
 # so the automation rule can invoke this playbook. Equivalent to the portal's
 # "Manage playbook permissions". Gated on the object id being supplied.
@@ -256,18 +406,41 @@ resource "azurerm_role_assignment" "sentinel_run_playbook" {
   principal_id         = var.security_insights_object_id
 }
 
-# --- Automation rule: run the playbook on every incident -------------------
+# --- Automation rules: run the playbook on incident create and update ------
 # Requires the grant above (or the equivalent portal grant) to already exist, else
 # creation fails with "Missing required permissions for Microsoft Sentinel".
-resource "random_uuid" "discord_automation" {}
+# The playbook branches on the discord-thread label, so create -> new forum post and
+# update -> comment (when new alerts joined).
+resource "random_uuid" "discord_automation_created" {}
+resource "random_uuid" "discord_automation_updated" {}
 
-resource "azurerm_sentinel_automation_rule" "discord_all_incidents" {
-  name                       = random_uuid.discord_automation.result
+resource "azurerm_sentinel_automation_rule" "discord_incident_created" {
+  name                       = random_uuid.discord_automation_created.result
   log_analytics_workspace_id = azurerm_log_analytics_workspace.law.id
-  display_name               = "Notify Discord on all incidents"
+  display_name               = "Discord: forum post on new incidents"
   order                      = 1
   triggers_on                = "Incidents"
   triggers_when              = "Created"
+
+  action_playbook {
+    logic_app_id = azapi_resource.discord_playbook.id
+    order        = 1
+    tenant_id    = data.azurerm_client_config.current.tenant_id
+  }
+
+  depends_on = [
+    azurerm_sentinel_log_analytics_workspace_onboarding.sentinel,
+    azurerm_role_assignment.sentinel_run_playbook,
+  ]
+}
+
+resource "azurerm_sentinel_automation_rule" "discord_incident_updated" {
+  name                       = random_uuid.discord_automation_updated.result
+  log_analytics_workspace_id = azurerm_log_analytics_workspace.law.id
+  display_name               = "Discord: comment on incident updates"
+  order                      = 2
+  triggers_on                = "Incidents"
+  triggers_when              = "Updated"
 
   action_playbook {
     logic_app_id = azapi_resource.discord_playbook.id
