@@ -158,13 +158,17 @@ resource "azapi_resource" "discord_playbook" {
               }
               body = {
                 username = "Microsoft Sentinel"
-                content  = "🚨 **@{triggerBody()?['object']?['properties']?['title']}**"
+                content  = "🚨 **Incident #@{triggerBody()?['object']?['properties']?['incidentNumber']}: @{triggerBody()?['object']?['properties']?['title']}**"
                 embeds = [
                   {
                     title       = "@{triggerBody()?['object']?['properties']?['title']}"
                     description = "@{triggerBody()?['object']?['properties']?['description']}"
                     url         = "@{triggerBody()?['object']?['properties']?['incidentUrl']}"
                     color       = 15158332
+                    timestamp   = "@{triggerBody()?['object']?['properties']?['createdTimeUtc']}"
+                    footer = {
+                      text = "@{triggerBody()?['object']?['properties']?['providerName']} · Incident #@{triggerBody()?['object']?['properties']?['incidentNumber']}"
+                    }
                     fields = [
                       {
                         name   = "Severity"
@@ -174,6 +178,26 @@ resource "azapi_resource" "discord_playbook" {
                       {
                         name   = "Status"
                         value  = "@{triggerBody()?['object']?['properties']?['status']}"
+                        inline = true
+                      },
+                      {
+                        name   = "Owner"
+                        value  = "@{coalesce(triggerBody()?['object']?['properties']?['owner']?['assignedTo'], 'Unassigned')}"
+                        inline = true
+                      },
+                      {
+                        name   = "Alerts"
+                        value  = "@{coalesce(triggerBody()?['object']?['properties']?['additionalData']?['alertsCount'], 0)}"
+                        inline = true
+                      },
+                      {
+                        name   = "Tactics"
+                        value  = "@{if(empty(triggerBody()?['object']?['properties']?['additionalData']?['tactics']), 'None', join(triggerBody()?['object']?['properties']?['additionalData']?['tactics'], ', '))}"
+                        inline = true
+                      },
+                      {
+                        name   = "Products"
+                        value  = "@{if(empty(triggerBody()?['object']?['properties']?['additionalData']?['alertProductNames']), 'N/A', join(triggerBody()?['object']?['properties']?['additionalData']?['alertProductNames'], ', '))}"
                         inline = true
                       }
                     ]
