@@ -168,92 +168,39 @@ resource "azapi_resource" "discord_playbook" {
                 }
               ]
             }
-            # Thread already exists -> comment, but only when new alerts joined.
+            # Thread already exists -> a new alert joined the incident (the Updated
+            # automation rule only fires on Alerts/Added), so comment on the post.
             actions = {
-              Find_count_labels = {
-                type = "Query"
+              Comment_on_post = {
+                type = "Http"
                 inputs = {
-                  from  = "@coalesce(triggerBody()?['object']?['properties']?['labels'], json('[]'))"
-                  where = "@startsWith(item()?['labelName'], 'discord-count:')"
-                }
-              }
-              Select_counts = {
-                type     = "Select"
-                runAfter = { Find_count_labels = ["Succeeded"] }
-                inputs = {
-                  from   = "@body('Find_count_labels')"
-                  select = "@int(last(split(item()?['labelName'], ':')))"
-                }
-              }
-              Check_new_alerts = {
-                type     = "If"
-                runAfter = { Select_counts = ["Succeeded"] }
-                expression = {
-                  and = [
-                    {
-                      greater = [
-                        "@coalesce(triggerBody()?['object']?['properties']?['additionalData']?['alertsCount'], 0)",
-                        "@if(empty(body('Select_counts')), 0, max(body('Select_counts')))"
-                      ]
-                    }
-                  ]
-                }
-                actions = {
-                  Comment_on_post = {
-                    type = "Http"
-                    inputs = {
-                      method = "POST"
-                      uri    = "@{body('Get_webhook_url')?['value']}?thread_id=@{last(split(first(body('Find_thread_label'))?['labelName'], ':'))}"
-                      headers = {
-                        "Content-Type" = "application/json"
-                      }
-                      body = {
-                        embeds = [
+                  method = "POST"
+                  uri    = "@{body('Get_webhook_url')?['value']}?thread_id=@{last(split(first(body('Find_thread_label'))?['labelName'], ':'))}"
+                  headers = {
+                    "Content-Type" = "application/json"
+                  }
+                  body = {
+                    embeds = [
+                      {
+                        title       = "New alert(s) — incident now has @{coalesce(triggerBody()?['object']?['properties']?['additionalData']?['alertsCount'], 0)} alert(s)"
+                        description = "Status: @{triggerBody()?['object']?['properties']?['status']} · Severity: @{triggerBody()?['object']?['properties']?['severity']}"
+                        url         = "https://security.microsoft.com/incidents/@{triggerBody()?['object']?['properties']?['providerIncidentId']}"
+                        color       = 15844367
+                        timestamp   = "@{triggerBody()?['object']?['properties']?['lastModifiedTimeUtc']}"
+                        fields = [
                           {
-                            title       = "New alert(s) — incident now has @{coalesce(triggerBody()?['object']?['properties']?['additionalData']?['alertsCount'], 0)} alert(s)"
-                            description = "Status: @{triggerBody()?['object']?['properties']?['status']} · Severity: @{triggerBody()?['object']?['properties']?['severity']}"
-                            url         = "@{triggerBody()?['object']?['properties']?['incidentUrl']}"
-                            color       = 15844367
-                            timestamp   = "@{triggerBody()?['object']?['properties']?['lastModifiedTimeUtc']}"
-                            fields = [
-                              {
-                                name   = "Products"
-                                value  = "@{if(empty(triggerBody()?['object']?['properties']?['additionalData']?['alertProductNames']), 'N/A', join(triggerBody()?['object']?['properties']?['additionalData']?['alertProductNames'], ', '))}"
-                                inline = true
-                              },
-                              {
-                                name   = "Tactics"
-                                value  = "@{if(empty(triggerBody()?['object']?['properties']?['additionalData']?['tactics']), 'None', join(triggerBody()?['object']?['properties']?['additionalData']?['tactics'], ', '))}"
-                                inline = true
-                              }
-                            ]
+                            name   = "Products"
+                            value  = "@{if(empty(triggerBody()?['object']?['properties']?['additionalData']?['alertProductNames']), 'N/A', join(triggerBody()?['object']?['properties']?['additionalData']?['alertProductNames'], ', '))}"
+                            inline = true
+                          },
+                          {
+                            name   = "Tactics"
+                            value  = "@{if(empty(triggerBody()?['object']?['properties']?['additionalData']?['tactics']), 'None', join(triggerBody()?['object']?['properties']?['additionalData']?['tactics'], ', '))}"
+                            inline = true
                           }
                         ]
                       }
-                    }
-                  }
-                  Update_count_label = {
-                    type     = "ApiConnection"
-                    runAfter = { Comment_on_post = ["Succeeded"] }
-                    inputs = {
-                      host = {
-                        connection = {
-                          name = "@parameters('$connections')['azuresentinel']['connectionId']"
-                        }
-                      }
-                      method = "put"
-                      path   = "/Incidents"
-                      body = {
-                        incidentArmId = "@triggerBody()?['object']?['id']"
-                        tagsToAdd = {
-                          TagsToAdd = [
-                            {
-                              Tag = "discord-count:@{coalesce(triggerBody()?['object']?['properties']?['additionalData']?['alertsCount'], 0)}"
-                            }
-                          ]
-                        }
-                      }
-                    }
+                    ]
                   }
                 }
               }
@@ -277,7 +224,7 @@ resource "azapi_resource" "discord_playbook" {
                         {
                           title       = "@{triggerBody()?['object']?['properties']?['title']}"
                           description = "@{triggerBody()?['object']?['properties']?['description']}"
-                          url         = "@{triggerBody()?['object']?['properties']?['incidentUrl']}"
+                          url         = "https://security.microsoft.com/incidents/@{triggerBody()?['object']?['properties']?['providerIncidentId']}"
                           color       = 15158332
                           timestamp   = "@{triggerBody()?['object']?['properties']?['createdTimeUtc']}"
                           footer = {
@@ -337,9 +284,6 @@ resource "azapi_resource" "discord_playbook" {
                         TagsToAdd = [
                           {
                             Tag = "discord-thread:@{body('Create_forum_post')?['channel_id']}"
-                          },
-                          {
-                            Tag = "discord-count:@{coalesce(triggerBody()?['object']?['properties']?['additionalData']?['alertsCount'], 0)}"
                           }
                         ]
                       }
