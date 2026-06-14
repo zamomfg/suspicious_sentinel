@@ -50,6 +50,11 @@ variable "columns" {
     condition     = var.columns == null || length(var.columns) > 0
     error_message = "columns, when set, must contain at least one column."
   }
+
+  validation {
+    condition     = var.columns == null || !contains([for c in var.columns : lower(c.name)], "type")
+    error_message = "Column \"Type\" is reserved by Log Analytics and not allowed; rename it (e.g. \"EventType\")."
+  }
 }
 
 variable "plan" {

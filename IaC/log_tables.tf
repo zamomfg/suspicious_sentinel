@@ -88,7 +88,7 @@ module "tailscale_audit_table" {
     { name = "Actor", type = "dynamic" },
     { name = "Target", type = "dynamic" },
     { name = "Origin", type = "string" },
-    { name = "Type", type = "string" },
+    { name = "EventType", type = "string" },
     { name = "Old", type = "dynamic" },
     { name = "New", type = "dynamic" },
   ]

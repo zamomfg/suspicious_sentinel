@@ -20,7 +20,7 @@ $records = foreach ($l in $logs) {
         Actor         = $l.actor
         Target        = $l.target
         Origin        = [string]$l.origin
-        Type          = [string]$l.type
+        EventType     = [string]$l.type
         Old           = $l.old
         New           = $l.new
     }
