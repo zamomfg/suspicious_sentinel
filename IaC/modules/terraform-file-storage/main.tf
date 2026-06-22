@@ -11,7 +11,7 @@ variable "storage_container_name" {
 }
 
 variable "content_file_path" {
-  type    = string
+  type = string
   validation {
     condition     = var.content_file_path != ""
     error_message = "Module requires a file path"
@@ -39,7 +39,7 @@ variable "content_type" {
 
 locals {
   supported_file_types = tolist(["csv", "json"])
-  filename = basename(var.content_file_path)
+  filename             = basename(var.content_file_path)
 
   sas_token_url = try("${azurerm_storage_blob.blob.url}${data.azurerm_storage_account_blob_container_sas.sas_token.sas}", null)
 

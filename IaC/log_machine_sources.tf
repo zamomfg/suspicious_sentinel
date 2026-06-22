@@ -5,4 +5,6 @@ resource "azurerm_arc_machine_extension" "home_lab_ama" {
   arc_machine_id = data.azurerm_arc_machine.home_lab_ama.id
   publisher      = "Microsoft.Azure.Monitor"
   type           = "AzureMonitorLinuxAgent"
+
+  tags = var.tags
 }

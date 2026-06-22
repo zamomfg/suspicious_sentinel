@@ -1,6 +1,6 @@
 
 locals {
-  api_version = "2025-06-01"
+  api_version = "2025-09-01"
 
   # Map the friendly install toggles onto the API's contentKind strings.
   kind_map = {

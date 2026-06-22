@@ -1,9 +1,9 @@
 
 output "column_schema" {
   value = [
-      for col in azapi_resource.custom_table.output.properties.schema.columns : {
-        name = col.name
-        type = col.type
+    for col in azapi_resource.custom_table.output.properties.schema.columns : {
+      name = col.name
+      type = col.type
     }
   ]
 }

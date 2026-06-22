@@ -36,7 +36,7 @@ variable "data_streams" {
   }))
 
   validation {
-    condition = endswith(var.data_streams.table_name, "_CL") == false
+    condition     = endswith(var.data_streams.table_name, "_CL") == false
     error_message = "Custom tables need to end with _CL"
   }
 }
@@ -92,7 +92,7 @@ resource "azurerm_monitor_data_collection_rule" "dcr_unifi_logs" {
 }
 
 resource "azapi_resource" "law_table" {
-    count = lengt(var.data_streams)
+  count = lengt(var.data_streams)
 
 
   name      = var.data_streams[count.index].table_name

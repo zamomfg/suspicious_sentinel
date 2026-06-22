@@ -142,9 +142,9 @@ locals {
 
 output "sas_token" {
   value = {
-            container_name = var.name,
-            sas_token = local.sas_token_url
-          }
+    container_name = var.name,
+    sas_token      = local.sas_token_url
+  }
 }
 
 resource "azurerm_sentinel_watchlist" "watchlist" {
@@ -160,7 +160,7 @@ locals {
 }
 
 resource "azurerm_sentinel_watchlist_item" "watchlist_item" {
-  count = var.use_storage_account == true ? 0 : length(local.watchlist_data_csv) 
+  count = var.use_storage_account == true ? 0 : length(local.watchlist_data_csv)
 
   watchlist_id = azurerm_sentinel_watchlist.watchlist.id
 
