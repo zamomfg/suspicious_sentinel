@@ -8,6 +8,24 @@ variable "definition_name" {
   description = "Name/id of the dataConnectorDefinition. Pollers reference it via connectorDefinitionName."
 }
 
+variable "author" {
+  type        = string
+  default     = "Community"
+  description = "Author name shown in the connector's content metadata."
+}
+
+variable "support_name" {
+  type        = string
+  default     = "Community"
+  description = "Support name shown in the connector's content metadata."
+}
+
+variable "support_tier" {
+  type        = string
+  default     = "Community"
+  description = "Support tier shown as 'Supported by' on the connector page (Microsoft | Partner | Community)."
+}
+
 variable "connector_ui_config" {
   description = <<-EOT
     connectorUiConfig rendered as the connector's page in the Sentinel gallery.

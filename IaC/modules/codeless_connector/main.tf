@@ -23,6 +23,26 @@ resource "azapi_resource" "definition" {
   schema_validation_enabled = false
 }
 
+resource "azapi_resource" "metadata" {
+  type      = "Microsoft.SecurityInsights/metadata@${local.api_version}"
+  name      = "DataConnector-${var.definition_name}"
+  parent_id = var.workspace_id
+
+  body = {
+    properties = {
+      parentId  = azapi_resource.definition.id
+      contentId = var.definition_name
+      kind      = "DataConnector"
+      version   = "1.0.0"
+      source    = { kind = "LocalWorkspace", name = var.definition_name }
+      author    = { name = var.author }
+      support   = { name = var.support_name, tier = var.support_tier }
+    }
+  }
+
+  schema_validation_enabled = false
+}
+
 resource "azapi_resource" "poller" {
   for_each = var.pollers
 

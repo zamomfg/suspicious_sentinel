@@ -29,6 +29,7 @@ locals {
     id                    = "TailscaleCCPDefinition"
     title                 = "Tailscale Logging"
     publisher             = "Tailscale"
+    logo                  = file("${path.module}/../SentinelCCF/TailScale/tailscale-logo.svg")
     descriptionMarkdown   = "The [Tailscale](https://tailscale.com/) Logging data connector ingests configuration audit logs and network flow logs from the [Tailscale API](https://tailscale.com/api) into Microsoft Sentinel, authenticating with an OAuth 2.0 client-credentials client."
     graphQueriesTableName = "TailscaleAuditLogs_CL"
 
@@ -139,6 +140,10 @@ module "tailscale_connector" {
   workspace_id        = azurerm_log_analytics_workspace.law.id
   definition_name     = "TailscaleCCPDefinition"
   connector_ui_config = local.tailscale_connector_ui_config
+
+  author       = "Zamomfg"
+  support_name = "Community"
+  support_tier = "Community"
 
   pollers = {
     TailscaleAuditDataConnector = {
