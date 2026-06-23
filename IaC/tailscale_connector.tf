@@ -146,7 +146,7 @@ module "tailscale_connector" {
         dcrConfig = {
           dataCollectionEndpoint        = azurerm_monitor_data_collection_endpoint.tailscale.logs_ingestion_endpoint
           dataCollectionRuleImmutableId = module.tailscale_dcr.dcr_immutable_id
-          streamName                    = "${local.custom_stream_prefix}${module.tailscale_audit_table.name}"
+          streamName                    = local.tailscale_audit_stream
         }
         auth = merge(local.tailscale_oauth, { scope = "logs:configuration:read" })
         request = merge(local.tailscale_request_base, {
@@ -166,7 +166,7 @@ module "tailscale_connector" {
         dcrConfig = {
           dataCollectionEndpoint        = azurerm_monitor_data_collection_endpoint.tailscale.logs_ingestion_endpoint
           dataCollectionRuleImmutableId = module.tailscale_dcr.dcr_immutable_id
-          streamName                    = "${local.custom_stream_prefix}${module.tailscale_network_table.name}"
+          streamName                    = local.tailscale_network_stream
         }
         auth = merge(local.tailscale_oauth, { scope = "logs:network:read" })
         request = merge(local.tailscale_request_base, {

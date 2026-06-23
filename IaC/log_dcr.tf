@@ -314,11 +314,10 @@ module "dcr_unifi" {
   logging_workspace_id = azurerm_log_analytics_workspace.law.id
 }
 
-# The input chema is the API's wire shape (camelCase, and a reserved `type` field the tables
-# can't hold), so unlike the pre-shaped sources it can't reuse the tables' schema.
+# Input streams carry the raw API wire schema (camelCase, incl. reserved `type`); the transform renames it into the tables. Names stay distinct from the Custom-<table>_CL output streams so source binds to these columns.
 locals {
-  # tailscale_audit_stream   = "${local.custom_stream_prefix}${module.tailscale_audit_table.name}"
-  # tailscale_network_stream = "${local.custom_stream_prefix}${module.tailscale_network_table.name}"
+  tailscale_audit_stream   = "${local.custom_stream_prefix}TailscaleAuditLogs"
+  tailscale_network_stream = "${local.custom_stream_prefix}TailscaleNetworkLogs"
 
   tailscale_audit_input_stream_columns = [
     { name = "eventTime", type = "string" },
@@ -342,7 +341,6 @@ locals {
     { name = "exitTraffic", type = "dynamic" },
     { name = "subnetTraffic", type = "dynamic" },
   ]
-
 }
 
 module "tailscale_dcr" {
@@ -360,19 +358,20 @@ module "tailscale_dcr" {
 
   stream_declarations = [
     {
-      stream_name   = "${local.custom_stream_prefix}${module.tailscale_network_table.name}"
-      column_schema = module.tailscale_network_table.column_schema
+      stream_name   = local.tailscale_network_stream
+      column_schema = local.tailscale_network_input_stream_columns
     },
     {
-      stream_name   = "${local.custom_stream_prefix}${module.tailscale_audit_table.name}"
-      column_schema = module.tailscale_audit_table.column_schema
+      stream_name   = local.tailscale_audit_stream
+      column_schema = local.tailscale_audit_input_stream_columns
     },
   ]
 
   data_flows = [
     {
-      streams       = ["${local.custom_stream_prefix}${module.tailscale_network_table.name}"]
+      streams       = [local.tailscale_network_stream]
       destinations  = [azurerm_log_analytics_workspace.law.id]
+      output_stream = "${local.custom_stream_prefix}${module.tailscale_network_table.name}"
       transform_kql = <<-KQL
         source
         | project
@@ -388,8 +387,9 @@ module "tailscale_dcr" {
       KQL
     },
     {
-      streams       = ["${local.custom_stream_prefix}${module.tailscale_audit_table.name}"]
+      streams       = [local.tailscale_audit_stream]
       destinations  = [azurerm_log_analytics_workspace.law.id]
+      output_stream = "${local.custom_stream_prefix}${module.tailscale_audit_table.name}"
       transform_kql = <<-KQL
         source
         | project
