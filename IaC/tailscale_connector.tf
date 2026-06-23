@@ -164,6 +164,9 @@ module "tailscale_connector" {
       sensitive_properties = {
         auth = { ClientSecret = var.tailscale_client_secret }
       }
+      sensitive_body_version = {
+        "properties.auth.ClientSecret" = "1"
+      }
     }
 
     TailscaleNetworkDataConnector = {
@@ -183,6 +186,9 @@ module "tailscale_connector" {
       }
       sensitive_properties = {
         auth = { ClientSecret = var.tailscale_client_secret }
+      }
+      sensitive_body_version = {
+        "properties.auth.ClientSecret" = "1"
       }
     }
   }
