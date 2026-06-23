@@ -5,7 +5,8 @@
 # each poller's dcrConfig.
 
 locals {
-  api_version = "2025-09-01"
+  api_version    = "2025-09-01"
+  workspace_name = reverse(split("/", var.workspace_id))[0]
 }
 
 resource "azapi_resource" "definition" {
@@ -34,7 +35,7 @@ resource "azapi_resource" "metadata" {
       contentId = var.definition_name
       kind      = "DataConnector"
       version   = "1.0.0"
-      source    = { kind = "LocalWorkspace", name = var.definition_name }
+      source    = { kind = "LocalWorkspace", name = local.workspace_name }
       author    = { name = var.author }
       support   = { name = var.support_name, tier = var.support_tier }
     }
