@@ -165,10 +165,5 @@ variable "pollers" {
     })
 
     sensitive_properties = optional(any, {})
-
-    # Map of dotted paths in sensitive_properties to a version string; azapi omits the
-    # sensitive value from the request unless its version changes (avoids a perpetual
-    # diff, and bumping the version rotates the secret).
-    sensitive_body_version = optional(map(string), {})
   }))
 }

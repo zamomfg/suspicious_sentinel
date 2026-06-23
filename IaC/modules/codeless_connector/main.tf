@@ -60,8 +60,6 @@ resource "azapi_resource" "poller" {
     properties = each.value.sensitive_properties
   }
 
-  sensitive_body_version = each.value.sensitive_body_version
-
   schema_validation_enabled = false
 
   depends_on = [azapi_resource.definition]
