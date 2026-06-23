@@ -355,6 +355,7 @@ module "tailscale_dcr" {
 
   data_collection_endpoint_id   = azurerm_monitor_data_collection_endpoint.tailscale.id
   law_destinations_workspace_id = [azurerm_log_analytics_workspace.law.id]
+  data_sources_syslog           = []
   logging_workspace_id          = azurerm_log_analytics_workspace.law.id
 
   stream_declarations = [
