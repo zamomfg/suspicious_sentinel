@@ -68,6 +68,7 @@ locals {
     ]
 
     availability = {
+      status    = 1
       isPreview = false
     }
 
@@ -85,6 +86,7 @@ locals {
           providerDisplayName    = "Workspace"
           scope                  = "Workspace"
           requiredPermissions = {
+            action = false
             write  = true
             read   = true
             delete = true
