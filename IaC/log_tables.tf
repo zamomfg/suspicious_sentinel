@@ -47,14 +47,26 @@ module "table_ubiquiti" {
   table_struct_file_path = "${local.struct_declaration_path}/Ubiquiti_CL_struct.json"
 }
 
-# Tailscale tables now created by the Sentinel codeless connector (CCF) ARM
-# template in SentinelCCF/TailScale/mainTemplate.json — see also the commented-out DCR in
-# log_dcr.tf and function app in tailscale_logs.tf.
-/*
-module "tailscale_table" {
+# One tailored _CL table per UniFi log category. Driven by local.unifi_categories
+# (log_dcr.tf); each table's schema is the common columns plus the category's
+# entry in local.unifi_category_extra_columns above.
+module "unifi_tables" {
+  for_each = local.unifi_categories
+  source   = "./modules/law_table"
+
+  name             = "Ubiquiti${each.key}${local.table_postifx}"
+  law_workspace_id = azurerm_log_analytics_workspace.law.id
+
+  retention_in_days    = 90
+  totalRetentionInDays = 90
+  columns              = concat(local.unifi_common_columns, local.unifi_category_extra_columns[each.key])
+}
+
+# Tailscale output tables renames the raw API JSON into these PascalCase schemas.
+module "tailscale_network_table" {
   source = "./modules/law_table"
 
-  name             = "TailscaleNetworkLogs_CL"
+  name             = "TailscaleNetworkLogs${local.table_postifx}"
   law_workspace_id = azurerm_log_analytics_workspace.law.id
 
   retention_in_days    = 90
@@ -76,7 +88,7 @@ module "tailscale_table" {
 module "tailscale_audit_table" {
   source = "./modules/law_table"
 
-  name             = "TailscaleAuditLogs_CL"
+  name             = "TailscaleAuditLogs${local.table_postifx}"
   law_workspace_id = azurerm_log_analytics_workspace.law.id
 
   retention_in_days    = 90
@@ -94,20 +106,4 @@ module "tailscale_audit_table" {
     { name = "Old", type = "dynamic" },
     { name = "New", type = "dynamic" },
   ]
-}
-*/
-
-# One tailored _CL table per UniFi log category. Driven by local.unifi_categories
-# (log_dcr.tf); each table's schema is the common columns plus the category's
-# entry in local.unifi_category_extra_columns above.
-module "unifi_tables" {
-  for_each = local.unifi_categories
-  source   = "./modules/law_table"
-
-  name             = "Ubiquiti${each.key}${local.table_postifx}"
-  law_workspace_id = azurerm_log_analytics_workspace.law.id
-
-  retention_in_days    = 90
-  totalRetentionInDays = 90
-  columns              = concat(local.unifi_common_columns, local.unifi_category_extra_columns[each.key])
 }

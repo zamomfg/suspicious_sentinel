@@ -314,10 +314,37 @@ module "dcr_unifi" {
   logging_workspace_id = azurerm_log_analytics_workspace.law.id
 }
 
-# Tailscale DCR + data flows now created by the Sentinel codeless connector (CCF)
-# ARM template (SentinelCCF/TailScale/mainTemplate.json) when you click Connect; the
-# DCE it binds to lives in log_dce.tf. Kept commented for reference.
-/*
+# The input chema is the API's wire shape (camelCase, and a reserved `type` field the tables
+# can't hold), so unlike the pre-shaped sources it can't reuse the tables' schema.
+locals {
+  # tailscale_audit_stream   = "${local.custom_stream_prefix}${module.tailscale_audit_table.name}"
+  # tailscale_network_stream = "${local.custom_stream_prefix}${module.tailscale_network_table.name}"
+
+  tailscale_audit_input_stream_columns = [
+    { name = "eventTime", type = "string" },
+    { name = "eventGroupID", type = "string" },
+    { name = "action", type = "string" },
+    { name = "actor", type = "dynamic" },
+    { name = "target", type = "dynamic" },
+    { name = "origin", type = "string" },
+    { name = "type", type = "string" },
+    { name = "old", type = "dynamic" },
+    { name = "new", type = "dynamic" },
+  ]
+
+  tailscale_network_input_stream_columns = [
+    { name = "nodeId", type = "string" },
+    { name = "start", type = "string" },
+    { name = "end", type = "string" },
+    { name = "logged", type = "string" },
+    { name = "virtualTraffic", type = "dynamic" },
+    { name = "physicalTraffic", type = "dynamic" },
+    { name = "exitTraffic", type = "dynamic" },
+    { name = "subnetTraffic", type = "dynamic" },
+  ]
+
+}
+
 module "tailscale_dcr" {
   source = "./modules/dcr"
 
@@ -328,33 +355,56 @@ module "tailscale_dcr" {
 
   data_collection_endpoint_id   = azurerm_monitor_data_collection_endpoint.tailscale.id
   law_destinations_workspace_id = [azurerm_log_analytics_workspace.law.id]
-  data_sources_syslog           = []
   logging_workspace_id          = azurerm_log_analytics_workspace.law.id
 
   stream_declarations = [
     {
-      stream_name   = local.tailscale_network_stream_name
-      column_schema = module.tailscale_table.column_schema
+      stream_name   = "${local.custom_stream_prefix}${module.tailscale_network_table.name}"
+      column_schema = module.tailscale_network_table.column_schema
     },
     {
-      stream_name   = local.tailscale_audit_stream_name
+      stream_name   = "${local.custom_stream_prefix}${module.tailscale_audit_table.name}"
       column_schema = module.tailscale_audit_table.column_schema
     },
   ]
 
   data_flows = [
     {
-      streams       = [local.tailscale_network_stream_name]
+      streams       = ["${local.custom_stream_prefix}${module.tailscale_network_table.name}"]
       destinations  = [azurerm_log_analytics_workspace.law.id]
-      transform_kql = "source"
-      output_stream = "Custom-TailscaleNetworkLogs_CL"
+      transform_kql = <<-KQL
+        source
+        | project
+            TimeGenerated   = todatetime(logged),
+            NodeId          = tostring(nodeId),
+            Start           = todatetime(start),
+            End             = todatetime(end),
+            Logged          = todatetime(logged),
+            VirtualTraffic  = virtualTraffic,
+            PhysicalTraffic = physicalTraffic,
+            ExitTraffic     = exitTraffic,
+            SubnetTraffic   = subnetTraffic
+      KQL
     },
     {
-      streams       = [local.tailscale_audit_stream_name]
+      streams       = ["${local.custom_stream_prefix}${module.tailscale_audit_table.name}"]
       destinations  = [azurerm_log_analytics_workspace.law.id]
-      transform_kql = "source"
-      output_stream = "Custom-TailscaleAuditLogs_CL"
+      transform_kql = <<-KQL
+        source
+        | project
+            TimeGenerated = todatetime(eventTime),
+            EventTime     = todatetime(eventTime),
+            EventGroupID  = tostring(eventGroupID),
+            Action        = tostring(action),
+            Actor         = actor,
+            Target        = target,
+            Origin        = tostring(origin),
+            EventType     = tostring(type),
+            Old           = old,
+            New           = new
+      KQL
     },
   ]
+
+  depends_on = [module.tailscale_network_table, module.tailscale_audit_table]
 }
-*/

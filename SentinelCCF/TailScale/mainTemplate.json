@@ -49,9 +49,9 @@
     "variables": {
         "workspaceResourceId": "[resourceId('microsoft.OperationalInsights/Workspaces', parameters('workspace'))]",
         "_solutionName": "Tailscale Logging",
-        "_solutionVersion": "3.0.0",
+        "_solutionVersion": "0.1.0",
         "_solutionAuthor": "Tailscale",
-        "_packageIcon": "<img src=\"https://tailscale.com/files/images/logo.svg\" width=\"75px\" height=\"75px\">",
+        "_packageIcon": "<img src=\"https://tailscale.com/favicon.svg\" width=\"75px\" height=\"75px\">",
         "_solutionId": "tailscale.tailscale-sentinel-solution-logging",
         "dataConnectorVersionConnectorDefinition": "1.0.0",
         "dataConnectorVersionConnections": "1.0.0",

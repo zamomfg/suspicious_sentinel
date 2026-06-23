@@ -21,10 +21,15 @@ When adding new inputs:
 - Do NOT add a `Co-authored-by` trailer.
 
 ## Comments
-- Minimize comments. If the code is explicit (clear names, obvious structure),
-  add no comment.
-- Multi-line comments are very rare — only for genuine edge cases or code that
-  otherwise looks wrong/surprising. Otherwise keep to a short single line, if any.
+- Do NOT write comments unless they are extremely necessary. The default is no
+  comment at all.
+- Make the code self-explanatory through clear names and obvious structure
+  instead of explaining it with a comment.
+- Never write a comment that restates what the code already says.
+- A comment is justified only when the code is genuinely surprising, looks wrong
+  but is correct, or encodes a non-obvious external constraint that can't be made
+  clear in code. In that rare case, keep it to a single short line.
+- Multi-line comment blocks are essentially never acceptable.
 
 ## Resource naming
 All Azure resources follow the Azure standard
@@ -42,3 +47,11 @@ e.g. `kv-sops-neu-001`, `asp-asn-neu-001`, `func-asn-neu-001`.
   resources read and review more clearly here. Creating ~10 distinct resources
   longhand is fine and preferred over a clever loop.
 - Reserve loops for large, genuinely homogeneous sets.
+
+## azapi / Azure REST API
+- When building resources with the `azapi` provider, the Azure REST API reference
+  is the authoritative schema for the request `body` — which fields exist and
+  which are actually required. Use it instead of guessing or relying on prose
+  docs (the two can disagree; the REST API model wins).
+- For Microsoft Sentinel resources, start from the operation groups index:
+  https://learn.microsoft.com/rest/api/securityinsights/operation-groups

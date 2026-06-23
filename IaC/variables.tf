@@ -51,7 +51,13 @@ variable "tailscale_tailnet" {
 variable "tailscale_client_id" {
   type        = string
   sensitive   = true
-  description = "Tailscale workload-identity-federation client id. Supplied via TF_VAR_tailscale_client_id (GitHub Actions secret)."
+  description = "Tailscale OAuth client id (client-credentials) used by the codeless connector. Supplied via TF_VAR_tailscale_client_id (GitHub Actions secret)."
+}
+
+variable "tailscale_client_secret" {
+  type        = string
+  sensitive   = true
+  description = "Tailscale OAuth client secret used by the codeless connector. Supplied via TF_VAR_tailscale_client_secret (GitHub Actions secret)."
 }
 
 variable "tailscale_log_interval_minutes" {

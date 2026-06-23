@@ -133,6 +133,21 @@ UnifiLogs_CL
 
 UnifiFirewallLogs_CL
 
+### Sentinel codeless connectors (CCF)
+
+Codeless connectors are deployed directly with the `azapi` provider via the
+`IaC/modules/codeless_connector` module (data connector definition + RestApiPoller
+connections) — no ARM solution template or Content Hub install step. The DCR, DCE
+and output tables they bind to are created by their own modules and passed in.
+
+When authoring a connector definition or poller, the **Microsoft Sentinel RM REST
+API** is the authoritative reference for the resource body and exactly which fields
+are required — the prose CCF docs and the REST API model sometimes disagree, so
+trust the REST API:
+
+- Operation groups: <https://learn.microsoft.com/rest/api/securityinsights/operation-groups>
+- Data connectors (RestApiPoller): <https://learn.microsoft.com/rest/api/securityinsights/data-connectors/create-or-update>
+
 ### Logger service
 
 `logger`is a program for logging logs to a LAW. Source file is in: `/logger/go/logger.go`.
