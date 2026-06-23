@@ -78,3 +78,20 @@ module "soc_process_framework" {
     workbooks = true
   }
 }
+
+resource "azapi_resource" "tailscale_solution" {
+  type      = "Microsoft.Resources/deployments@2021-04-01"
+  name      = "tailscale-ccf-solution"
+  parent_id = data.azurerm_resource_group.rg_log.id
+  body = {
+    properties = {
+      mode     = "Incremental"
+      template = jsondecode(file("${path.module}/../SentinelCCF/TailScale/mainTemplate.json"))
+      parameters = {
+        workspace                  = { value = azurerm_log_analytics_workspace.law.name }
+        "workspace-location"       = { value = data.azurerm_resource_group.rg_log.location }
+        dataCollectionEndpointName = { value = azurerm_monitor_data_collection_endpoint.tailscale.name }
+      }
+    }
+  }
+}

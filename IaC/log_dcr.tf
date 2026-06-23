@@ -314,16 +314,10 @@ module "dcr_unifi" {
   logging_workspace_id = azurerm_log_analytics_workspace.law.id
 }
 
-# Direct-ingestion endpoint + rule for the Tailscale logs pushed by func-tailscale
-# (tailscale_logs.tf). Streams map to the TailscaleNetworkLogs_CL / TailscaleAuditLogs_CL
-# tables defined in log_tables.tf.
-resource "azurerm_monitor_data_collection_endpoint" "tailscale" {
-  name                = "dce-tailscale-${local.location_short}-001"
-  resource_group_name = data.azurerm_resource_group.rg_log.name
-  location            = data.azurerm_resource_group.rg_log.location
-  tags                = var.tags
-}
-
+# Tailscale DCR + data flows now created by the Sentinel codeless connector (CCF)
+# ARM template (SentinelCCF/TailScale/mainTemplate.json) when you click Connect; the
+# DCE it binds to lives in log_dce.tf. Kept commented for reference.
+/*
 module "tailscale_dcr" {
   source = "./modules/dcr"
 
@@ -363,3 +357,4 @@ module "tailscale_dcr" {
     },
   ]
 }
+*/

@@ -47,8 +47,10 @@ module "table_ubiquiti" {
   table_struct_file_path = "${local.struct_declaration_path}/Ubiquiti_CL_struct.json"
 }
 
-# Tailscale network + configuration-audit logs, ingested by func-tailscale via
-# the Logs Ingestion API (tailscale_logs.tf, dcr-tailscale in log_dcr.tf).
+# Tailscale tables now created by the Sentinel codeless connector (CCF) ARM
+# template in SentinelCCF/TailScale/mainTemplate.json — see also the commented-out DCR in
+# log_dcr.tf and function app in tailscale_logs.tf.
+/*
 module "tailscale_table" {
   source = "./modules/law_table"
 
@@ -93,6 +95,7 @@ module "tailscale_audit_table" {
     { name = "New", type = "dynamic" },
   ]
 }
+*/
 
 # One tailored _CL table per UniFi log category. Driven by local.unifi_categories
 # (log_dcr.tf); each table's schema is the common columns plus the category's
