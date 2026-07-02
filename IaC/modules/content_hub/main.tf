@@ -78,11 +78,13 @@ data "azapi_resource_list" "templates" {
 }
 
 locals {
-  # Keep only templates whose kind the caller enabled, keyed by contentId.
+  # Keep only templates whose kind the caller enabled, keyed by contentId. When
+  # only_content_ids is set, further restrict to that allowlist.
   templates = {
     for t in data.azapi_resource_list.templates.output.value :
     t.properties.contentId => t.properties
-    if contains(local.enabled_kinds, t.properties.contentKind)
+    if contains(local.enabled_kinds, t.properties.contentKind) &&
+    (var.only_content_ids == null || contains(var.only_content_ids, t.properties.contentId))
   }
 }
 

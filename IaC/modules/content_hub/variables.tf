@@ -56,3 +56,15 @@ variable "install" {
   default     = {}
   description = "Toggle which content kinds from the solution to deploy."
 }
+
+# Optional allowlist of specific item contentIds to deploy. When set, only items
+# whose contentId is in this list are deployed (still restricted to the kinds
+# enabled above). Use it when a solution ships several items of the same kind and
+# you want just one — e.g. the Defender for Cloud solution ships both the legacy
+# subscription-based and the tenant-based connectors. Null = deploy every item of
+# each enabled kind.
+variable "only_content_ids" {
+  type        = set(string)
+  default     = null
+  description = "If set, restrict deployment to items with these contentIds (within the enabled kinds)."
+}
