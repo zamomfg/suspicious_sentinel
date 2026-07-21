@@ -32,14 +32,14 @@ resource "azurerm_sentinel_log_analytics_workspace_onboarding" "sentinel" {
 #   schema_validation_enabled = false
 # }
 
-# resource "azapi_resource" "entity_analytics" {
-#   type      = "Microsoft.SecurityInsights/settings@${local.settings_api_version}"
-#   name      = "EntityAnalytics"
-#   parent_id = azurerm_log_analytics_workspace.law.id
-#   body      = { kind = "EntityAnalytics", properties = { entityProviders = ["AzureActiveDirectory"] } }
+resource "azapi_resource" "entity_analytics" {
+  type      = "Microsoft.SecurityInsights/settings@${local.settings_api_version}"
+  name      = "EntityAnalytics"
+  parent_id = azurerm_log_analytics_workspace.law.id
+  body      = { kind = "EntityAnalytics", properties = { entityProviders = ["AzureActiveDirectory"] } }
 
-#   schema_validation_enabled = false
-# }
+  schema_validation_enabled = false
+}
 
 # # resource "azapi_resource" "eyes_on" {
 # #   type      = "Microsoft.SecurityInsights/settings@${local.settings_api_version}"
@@ -58,4 +58,6 @@ resource "azapi_resource" "ueba" {
   }
 
   schema_validation_enabled = false
+
+  depends_on = [ azapi_resource.entity_analytics ] # UEBA requires that entity analytics are enabled
 }
