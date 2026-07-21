@@ -3,9 +3,11 @@
 #   source = "./modules/content_hub"
 
 #   log_analytics_workspace_id = azurerm_log_analytics_workspace.law.id
-#   api_version                = local.settings_api_version
+#   resource_group_name        = data.azurerm_resource_group.rg_log.name
+#   workspace_name             = azurerm_log_analytics_workspace.law.name
+#   location                   = data.azurerm_resource_group.rg_log.location
 #   content_id                 = "azuresentinel.azure-sentinel-solution-uebaessentials"
-#   solution_version           = "3.0.6" # omit to track catalog latest; bump to update
+#   solution_version           = "3.0.6"
 
 #   install = {
 #     workbooks       = true

@@ -48,14 +48,14 @@ resource "azurerm_sentinel_log_analytics_workspace_onboarding" "sentinel" {
 # #   body      = { kind = "EyesOn", properties = { isEnabled = true } }
 # # }
 
-# resource "azapi_resource" "ueba" {
-#   type      = "Microsoft.SecurityInsights/settings@${local.settings_api_version}"
-#   name      = "Ueba"
-#   parent_id = azurerm_log_analytics_workspace.law.id
-#   body = {
-#     kind       = "Ueba"
-#     properties = { dataSources = ["AuditLogs", "AzureActivity", "SecurityEvent", "SigninLogs"] }
-#   }
+resource "azapi_resource" "ueba" {
+  type      = "Microsoft.SecurityInsights/settings@${local.settings_api_version}"
+  name      = "Ueba"
+  parent_id = azurerm_log_analytics_workspace.law.id
+  body = {
+    kind       = "Ueba"
+    properties = { dataSources = ["AuditLogs", "AzureActivity", "SecurityEvent", "SigninLogs"] }
+  }
 
-#   schema_validation_enabled = false
-# }
+  schema_validation_enabled = false
+}
