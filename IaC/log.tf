@@ -1,6 +1,6 @@
 
 locals {
-  settings_api_version = "2025-06-01"
+  settings_api_version = "2025-07-01-preview"
 }
 
 resource "azurerm_log_analytics_workspace" "law" {
