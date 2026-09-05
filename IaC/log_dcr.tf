@@ -148,8 +148,8 @@ module "dcr_mikrotik" {
       output_stream = "${local.custom_stream_prefix}${module.mikrotik_tables[k].name}"
       transform_kql = join("\n", compact([
         trimspace(local.mikrotik_source),
-        trimspace(c.filter),
         trimspace(local.mikrotik_common_extends),
+        trimspace(c.filter),
         trimspace(c.extends),
         "| project ${local.mikrotik_common_projection}${length(local.mikrotik_category_columns[k]) > 0 ? ",${join(",", local.mikrotik_category_columns[k])}" : ""}",
       ]))
