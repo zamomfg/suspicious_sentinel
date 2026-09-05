@@ -9,16 +9,16 @@
 # Dedicated identity the playbook runs as — used for both the Sentinel connection
 # and the Key Vault read. User-assigned so its roles exist before the playbook runs.
 resource "azurerm_user_assigned_identity" "playbook" {
-  name                = "id-soc-discord-${local.location_short}-001"
-  location            = data.azurerm_resource_group.rg_log.location
+  name                = "id-soc-discord-${local.primary_location_short}-001"
+  location            = local.primary_location
   resource_group_name = data.azurerm_resource_group.rg_log.name
   tags                = var.tags
 }
 
 # --- Key Vault holding the Discord webhook URL -----------------------------
 resource "azurerm_key_vault" "soc" {
-  name                       = "kv-soc-${local.location_short}-001"
-  location                   = data.azurerm_resource_group.rg_log.location
+  name                       = "kv-soc-${local.primary_location_short}-001"
+  location                   = local.primary_location
   resource_group_name        = data.azurerm_resource_group.rg_log.name
   tenant_id                  = data.azurerm_client_config.current.tenant_id
   sku_name                   = "standard"
@@ -47,8 +47,8 @@ resource "azurerm_key_vault_secret" "discord_webhook" {
 # --- Microsoft Sentinel managed connection (managed-identity auth) ---------
 resource "azapi_resource" "sentinel_connection" {
   type      = "Microsoft.Web/connections@2016-06-01"
-  name      = "azuresentinel-soc-${local.location_short}-001"
-  location  = data.azurerm_resource_group.rg_log.location
+  name      = "azuresentinel-soc-${local.primary_location_short}-001"
+  location  = local.primary_location
   parent_id = data.azurerm_resource_group.rg_log.id
   tags      = var.tags
 
@@ -58,7 +58,7 @@ resource "azapi_resource" "sentinel_connection" {
     properties = {
       displayName = "azuresentinel"
       api = {
-        id = "/subscriptions/${var.subscription_id}/providers/Microsoft.Web/locations/${data.azurerm_resource_group.rg_log.location}/managedApis/azuresentinel"
+        id = "/subscriptions/${var.subscription_id}/providers/Microsoft.Web/locations/${local.primary_location}/managedApis/azuresentinel"
       }
       parameterValueType = "Alternative"
     }
@@ -69,7 +69,7 @@ resource "azapi_resource" "sentinel_connection" {
 resource "azapi_resource" "keyvault_connection" {
   type      = "Microsoft.Web/connections@2016-06-01"
   name      = azurerm_key_vault.soc.name
-  location  = data.azurerm_resource_group.rg_log.location
+  location  = local.primary_location
   parent_id = data.azurerm_resource_group.rg_log.id
   tags      = var.tags
 
@@ -83,7 +83,7 @@ resource "azapi_resource" "keyvault_connection" {
         vaultName = azurerm_key_vault.soc.name
       }
       api = {
-        id = "/subscriptions/${var.subscription_id}/providers/Microsoft.Web/locations/${data.azurerm_resource_group.rg_log.location}/managedApis/keyvault"
+        id = "/subscriptions/${var.subscription_id}/providers/Microsoft.Web/locations/${local.primary_location}/managedApis/keyvault"
       }
     }
   }
@@ -92,8 +92,8 @@ resource "azapi_resource" "keyvault_connection" {
 # --- Playbook (Logic App) ---------------------------------------------------
 resource "azapi_resource" "discord_playbook" {
   type      = "Microsoft.Logic/workflows@2019-05-01"
-  name      = "logic-soc-discord-${local.location_short}-001"
-  location  = data.azurerm_resource_group.rg_log.location
+  name      = "logic-soc-discord-${local.primary_location_short}-001"
+  location  = local.primary_location
   parent_id = data.azurerm_resource_group.rg_log.id
   tags      = var.tags
 
@@ -301,7 +301,7 @@ resource "azapi_resource" "discord_playbook" {
             azuresentinel = {
               connectionId   = azapi_resource.sentinel_connection.id
               connectionName = "azuresentinel"
-              id             = "/subscriptions/${var.subscription_id}/providers/Microsoft.Web/locations/${data.azurerm_resource_group.rg_log.location}/managedApis/azuresentinel"
+              id             = "/subscriptions/${var.subscription_id}/providers/Microsoft.Web/locations/${local.primary_location}/managedApis/azuresentinel"
               connectionProperties = {
                 authentication = {
                   type     = "ManagedServiceIdentity"
@@ -312,7 +312,7 @@ resource "azapi_resource" "discord_playbook" {
             keyvault = {
               connectionId   = azapi_resource.keyvault_connection.id
               connectionName = "keyvault"
-              id             = "/subscriptions/${var.subscription_id}/providers/Microsoft.Web/locations/${data.azurerm_resource_group.rg_log.location}/managedApis/keyvault"
+              id             = "/subscriptions/${var.subscription_id}/providers/Microsoft.Web/locations/${local.primary_location}/managedApis/keyvault"
               connectionProperties = {
                 authentication = {
                   type     = "ManagedServiceIdentity"
@@ -360,7 +360,7 @@ resource "random_uuid" "discord_automation_updated" {}
 
 resource "azurerm_sentinel_automation_rule" "discord_incident_created" {
   name                       = random_uuid.discord_automation_created.result
-  log_analytics_workspace_id = azurerm_log_analytics_workspace.law.id
+  log_analytics_workspace_id = azurerm_log_analytics_workspace.law_sc.id
   display_name               = "Discord: forum post on new incidents"
   order                      = 1
   triggers_on                = "Incidents"
@@ -380,7 +380,7 @@ resource "azurerm_sentinel_automation_rule" "discord_incident_created" {
 
 resource "azurerm_sentinel_automation_rule" "discord_incident_updated" {
   name                       = random_uuid.discord_automation_updated.result
-  log_analytics_workspace_id = azurerm_log_analytics_workspace.law.id
+  log_analytics_workspace_id = azurerm_log_analytics_workspace.law_sc.id
   display_name               = "Discord: comment on incident updates"
   order                      = 2
   triggers_on                = "Incidents"

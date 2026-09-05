@@ -9,7 +9,7 @@ module "internal_hosts" {
   name                       = "InternalHosts"
   display_name               = "Internal hosts"
   item_search_key            = "Host"
-  log_analytics_workspace_id = azurerm_log_analytics_workspace.law.id
+  log_analytics_workspace_id = azurerm_log_analytics_workspace.law_sc.id
   file_path                  = "${local.watchlist_data_base_dir}test_hosts.csv"
   encrypted                  = true
 }
@@ -20,7 +20,7 @@ module "vlans" {
   name                       = "Vlans"
   display_name               = "VLANs / network segments"
   item_search_key            = "Subnet"
-  log_analytics_workspace_id = azurerm_log_analytics_workspace.law.id
+  log_analytics_workspace_id = azurerm_log_analytics_workspace.law_sc.id
   file_path                  = "${local.watchlist_data_base_dir}vlans.csv"
   encrypted                  = true
 }

@@ -2,10 +2,10 @@
 # module "ueba_essentials" {
 #   source = "./modules/content_hub"
 
-#   log_analytics_workspace_id = azurerm_log_analytics_workspace.law.id
+#   log_analytics_workspace_id = azurerm_log_analytics_workspace.law_sc.id
 #   resource_group_name        = data.azurerm_resource_group.rg_log.name
-#   workspace_name             = azurerm_log_analytics_workspace.law.name
-#   location                   = data.azurerm_resource_group.rg_log.location
+#   workspace_name             = azurerm_log_analytics_workspace.law_sc.name
+#   location                   = local.primary_location
 #   content_id                 = "azuresentinel.azure-sentinel-solution-uebaessentials"
 #   solution_version           = "3.0.6"
 
@@ -18,10 +18,10 @@
 module "azure_key_vault" {
   source = "./modules/content_hub"
 
-  log_analytics_workspace_id = azurerm_log_analytics_workspace.law.id
+  log_analytics_workspace_id = azurerm_log_analytics_workspace.law_sc.id
   resource_group_name        = data.azurerm_resource_group.rg_log.name
-  workspace_name             = azurerm_log_analytics_workspace.law.name
-  location                   = data.azurerm_resource_group.rg_log.location
+  workspace_name             = azurerm_log_analytics_workspace.law_sc.name
+  location                   = local.primary_location
   content_id                 = "azuresentinel.azure-sentinel-solution-azurekeyvault"
   solution_version           = "3.0.2" # omit to track catalog latest; bump to update
 
@@ -33,10 +33,10 @@ module "azure_key_vault" {
 module "soc_handbook" {
   source = "./modules/content_hub"
 
-  log_analytics_workspace_id = azurerm_log_analytics_workspace.law.id
+  log_analytics_workspace_id = azurerm_log_analytics_workspace.law_sc.id
   resource_group_name        = data.azurerm_resource_group.rg_log.name
-  workspace_name             = azurerm_log_analytics_workspace.law.name
-  location                   = data.azurerm_resource_group.rg_log.location
+  workspace_name             = azurerm_log_analytics_workspace.law_sc.name
+  location                   = local.primary_location
   content_id                 = "microsoftsentinelcommunity.azure-sentinel-solution-sochandbook"
   solution_version           = "3.0.6"
 
@@ -50,10 +50,10 @@ module "soc_handbook" {
 module "defender_for_cloud" {
   source = "./modules/content_hub"
 
-  log_analytics_workspace_id = azurerm_log_analytics_workspace.law.id
+  log_analytics_workspace_id = azurerm_log_analytics_workspace.law_sc.id
   resource_group_name        = data.azurerm_resource_group.rg_log.name
-  workspace_name             = azurerm_log_analytics_workspace.law.name
-  location                   = data.azurerm_resource_group.rg_log.location
+  workspace_name             = azurerm_log_analytics_workspace.law_sc.name
+  location                   = local.primary_location
   content_id                 = "azuresentinel.azure-sentinel-solution-microsoftdefenderforcloud"
   solution_version           = "3.0.3" # omit to track catalog latest; bump to update
 
@@ -66,10 +66,10 @@ module "defender_for_cloud" {
 module "soc_process_framework" {
   source = "./modules/content_hub"
 
-  log_analytics_workspace_id = azurerm_log_analytics_workspace.law.id
+  log_analytics_workspace_id = azurerm_log_analytics_workspace.law_sc.id
   resource_group_name        = data.azurerm_resource_group.rg_log.name
-  workspace_name             = azurerm_log_analytics_workspace.law.name
-  location                   = data.azurerm_resource_group.rg_log.location
+  workspace_name             = azurerm_log_analytics_workspace.law_sc.name
+  location                   = local.primary_location
   content_id                 = "azuresentinel.azure-sentinel-solution-socprocessframework"
   solution_version           = "3.0.2"
 
