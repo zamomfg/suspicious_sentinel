@@ -23,17 +23,17 @@ resource "azurerm_log_analytics_query_pack_query" "asn_func_runs" {
   EOT
 }
 
-# Aggregator parser for the Ubiquiti UniFi solution.
-#
-# We deliberately do NOT install the solution's own parser since we have set up parsing for the unifi events at transform time
-resource "azurerm_log_analytics_saved_search" "ubiquiti_audit_event_aggregator" {
-  name                       = "UbiquitiAuditEvent"
-  function_alias             = "UbiquitiAuditEvent"
-  display_name               = "Parser for UbiquitiAuditEvent"
+# Aggregator parser over the per-topic MikroTik tables. Parsing is done at
+# transform time (log_dcr.tf), so this just unions the split tables behind one
+# alias for querying.
+resource "azurerm_log_analytics_saved_search" "mikrotik_event_aggregator" {
+  name                       = "MikroTikEvent"
+  function_alias             = "MikroTikEvent"
+  display_name               = "Parser for MikroTikEvent"
   category                   = "Microsoft Sentinel Parser"
   log_analytics_workspace_id = azurerm_log_analytics_workspace.law.id
 
-  query = "union isfuzzy=true ${join(", ", [for k in keys(local.unifi_categories) : module.unifi_tables[k].name])}"
+  query = "union isfuzzy=true ${join(", ", [for k in keys(local.mikrotik_categories) : module.mikrotik_tables[k].name])}"
 }
 
 resource "azurerm_log_analytics_saved_search" "unified_sign_in_logs" {

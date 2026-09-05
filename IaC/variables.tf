@@ -91,7 +91,7 @@ locals {
       germanywestcentral = "gwc"
       switzerlandnorth   = "chn"
       norwayeast         = "noe"
-      swedencentral      = "sec"
+      swedencentral      = "sc"
       australiaeast      = "aue"
       southeastasia      = "sea"
       eastasia           = "ea"
