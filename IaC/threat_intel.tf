@@ -1,6 +1,6 @@
 
 resource "azurerm_sentinel_threat_intelligence_indicator" "test_malicious_ip" {
-  workspace_id      = azurerm_log_analytics_workspace.law.id
+  workspace_id      = azurerm_log_analytics_workspace.law_sc.id
   pattern_type      = "ipv4-addr"
   pattern           = "[ipv4-addr:value = '198.51.100.42']"
   source            = "Microsoft Sentinel"

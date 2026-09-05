@@ -136,7 +136,7 @@ locals {
 module "tailscale_connector" {
   source = "./modules/codeless_connector"
 
-  workspace_id        = azurerm_log_analytics_workspace.law.id
+  workspace_id        = azurerm_log_analytics_workspace.law_sc.id
   definition_name     = "TailscaleCCPDefinition"
   connector_ui_config = local.tailscale_connector_ui_config
 

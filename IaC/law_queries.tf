@@ -5,9 +5,9 @@ locals {
 }
 
 resource "azurerm_log_analytics_query_pack" "query_pack" {
-  name                = "pack-queries-${local.location_short}-001"
+  name                = "pack-queries-${local.primary_location_short}-001"
   resource_group_name = data.azurerm_resource_group.rg_log.name
-  location            = data.azurerm_resource_group.rg_log.location
+  location            = local.primary_location
   tags                = var.tags
 }
 
@@ -31,7 +31,7 @@ resource "azurerm_log_analytics_saved_search" "mikrotik_event_aggregator" {
   function_alias             = "MikroTikEvent"
   display_name               = "Parser for MikroTikEvent"
   category                   = "Microsoft Sentinel Parser"
-  log_analytics_workspace_id = azurerm_log_analytics_workspace.law.id
+  log_analytics_workspace_id = azurerm_log_analytics_workspace.law_sc.id
 
   query = "union isfuzzy=true ${join(", ", [for k in keys(local.mikrotik_categories) : module.mikrotik_tables[k].name])}"
 }
@@ -41,7 +41,7 @@ resource "azurerm_log_analytics_saved_search" "unified_sign_in_logs" {
   function_alias             = "UnifiedSignInLogs"
   display_name               = "Unified Sign-In Logs"
   category                   = "Security"
-  log_analytics_workspace_id = azurerm_log_analytics_workspace.law.id
+  log_analytics_workspace_id = azurerm_log_analytics_workspace.law_sc.id
 
   query = <<-EOT
     union isfuzzy=true SigninLogs, AADNonInteractiveUserSignInLogs
@@ -77,7 +77,7 @@ resource "azurerm_log_analytics_saved_search" "func_geolite_asn" {
   function_alias = "${local.custom_func_prefix}asn_info"
   display_name   = "${local.custom_func_prefix}asn_info"
 
-  log_analytics_workspace_id = azurerm_log_analytics_workspace.law.id
+  log_analytics_workspace_id = azurerm_log_analytics_workspace.law_sc.id
 
   category = "custom"
   query    = <<-EOT

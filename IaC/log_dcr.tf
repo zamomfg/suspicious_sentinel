@@ -11,14 +11,14 @@ locals {
 #   location            = azurerm_resource_group.rg_log.location
 #   tags                = var.tags
 
-#   law_destinations_workspace_id = [azurerm_log_analytics_workspace.law.id]
+#   law_destinations_workspace_id = [azurerm_log_analytics_workspace.law_sc.id]
 #   kind                          = "WorkspaceTransforms"
 
 #   data_flows = []
 
 #   stream_declarations = []
 
-#   logging_workspace_id = azurerm_log_analytics_workspace.law.id
+#   logging_workspace_id = azurerm_log_analytics_workspace.law_sc.id
 # }
 
 # MikroTik RouterOS: per-topic split of CEF syslog.
@@ -124,12 +124,12 @@ locals {
 module "dcr_mikrotik" {
   source = "./modules/dcr"
 
-  name                = "dcr-mikrotik-${local.location_short}-001"
+  name                = "dcr-mikrotik-${local.primary_location_short}-001"
   resource_group_name = data.azurerm_resource_group.rg_log.name
-  location            = data.azurerm_resource_group.rg_log.location
+  location            = local.primary_location
   tags                = var.tags
 
-  law_destinations_workspace_id = [azurerm_log_analytics_workspace.law.id]
+  law_destinations_workspace_id = [azurerm_log_analytics_workspace.law_sc.id]
 
   vm_association_ids = [data.azurerm_arc_machine.home_lab_ama.id]
 
@@ -145,7 +145,7 @@ module "dcr_mikrotik" {
   data_flows = [
     for k, c in local.mikrotik_categories : {
       streams       = ["Microsoft-Syslog"]
-      destinations  = [azurerm_log_analytics_workspace.law.id]
+      destinations  = [azurerm_log_analytics_workspace.law_sc.id]
       output_stream = "${local.custom_stream_prefix}${module.mikrotik_tables[k].name}"
       transform_kql = join("\n", compact([
         trimspace(local.mikrotik_source),
@@ -164,7 +164,7 @@ module "dcr_mikrotik" {
     }
   ]
 
-  logging_workspace_id = azurerm_log_analytics_workspace.law.id
+  logging_workspace_id = azurerm_log_analytics_workspace.law_sc.id
 }
 
 # Input streams carry the raw API wire schema (camelCase, incl. reserved `type`); the transform renames it into the tables. Names stay distinct from the Custom-<table>_CL output streams so source binds to these columns.
@@ -199,15 +199,15 @@ locals {
 module "tailscale_dcr" {
   source = "./modules/dcr"
 
-  name                = "dcr-tailscale-${local.location_short}-001"
+  name                = "dcr-tailscale-${local.primary_location_short}-001"
   resource_group_name = data.azurerm_resource_group.rg_log.name
-  location            = data.azurerm_resource_group.rg_log.location
+  location            = local.primary_location
   tags                = var.tags
 
   data_collection_endpoint_id   = azurerm_monitor_data_collection_endpoint.tailscale.id
-  law_destinations_workspace_id = [azurerm_log_analytics_workspace.law.id]
+  law_destinations_workspace_id = [azurerm_log_analytics_workspace.law_sc.id]
   data_sources_syslog           = []
-  logging_workspace_id          = azurerm_log_analytics_workspace.law.id
+  logging_workspace_id          = azurerm_log_analytics_workspace.law_sc.id
 
   stream_declarations = [
     {
@@ -223,7 +223,7 @@ module "tailscale_dcr" {
   data_flows = [
     {
       streams       = [local.tailscale_network_stream]
-      destinations  = [azurerm_log_analytics_workspace.law.id]
+      destinations  = [azurerm_log_analytics_workspace.law_sc.id]
       output_stream = "${local.custom_stream_prefix}${module.tailscale_network_table.name}"
       transform_kql = <<-KQL
         source
@@ -241,7 +241,7 @@ module "tailscale_dcr" {
     },
     {
       streams       = [local.tailscale_audit_stream]
-      destinations  = [azurerm_log_analytics_workspace.law.id]
+      destinations  = [azurerm_log_analytics_workspace.law_sc.id]
       output_stream = "${local.custom_stream_prefix}${module.tailscale_audit_table.name}"
       transform_kql = <<-KQL
         source

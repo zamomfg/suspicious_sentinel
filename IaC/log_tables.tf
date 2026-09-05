@@ -32,7 +32,7 @@ module "mikrotik_tables" {
   source   = "./modules/law_table"
 
   name             = "MikroTik${each.key}${local.table_postifx}"
-  law_workspace_id = azurerm_log_analytics_workspace.law.id
+  law_workspace_id = azurerm_log_analytics_workspace.law_sc.id
 
   retention_in_days    = 90
   totalRetentionInDays = 90
@@ -44,7 +44,7 @@ module "tailscale_network_table" {
   source = "./modules/law_table"
 
   name             = "TailscaleNetworkLogs${local.table_postifx}"
-  law_workspace_id = azurerm_log_analytics_workspace.law.id
+  law_workspace_id = azurerm_log_analytics_workspace.law_sc.id
 
   retention_in_days    = 90
   totalRetentionInDays = 90
@@ -66,7 +66,7 @@ module "tailscale_audit_table" {
   source = "./modules/law_table"
 
   name             = "TailscaleAuditLogs${local.table_postifx}"
-  law_workspace_id = azurerm_log_analytics_workspace.law.id
+  law_workspace_id = azurerm_log_analytics_workspace.law_sc.id
 
   retention_in_days    = 90
   totalRetentionInDays = 90
