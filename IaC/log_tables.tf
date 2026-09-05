@@ -1,65 +1,42 @@
-
 locals {
-  struct_declaration_path = "../log_struct_declaration/"
-  table_postifx           = "_CL"
+  table_postifx = "_CL"
 
-  # Columns present on every UniFi category table.
-  unifi_common_columns = concat(
+  # Columns present on every MikroTik table. Sourced from the CEF envelope
+  # (header + dvchost/dvc/msg extension); Message is the raw SyslogMessage.
+  mikrotik_common_columns = concat(
     [{ name = "TimeGenerated", type = "datetime" }],
     [for n in [
-      "EventVendor", "EventTime", "Hostname", "EventCategory", "DvcType",
-      "DvcMacAddr", "FirmwareVersion", "EventMessage", "Message",
+      "EventVendor", "EventProduct", "EventVersion", "Hostname", "DvcIpAddr",
+      "EventCategory", "DeviceEventClassId", "EventSeverity", "EventMessage", "Message",
     ] : { name = n, type = "string" }]
   )
 
   # Category-specific columns per table (all string). Single source of truth:
-  # module.unifi_tables builds each table schema from common + these, and the
-  # dcr_unifi transform projection (log_dcr.tf) derives its category columns
+  # module.mikrotik_tables builds each table schema from common + these, and the
+  # dcr_mikrotik transform projection (log_dcr.tf) derives its category columns
   # from the same map. Every column here must be produced by the category's
-  # `extends` in local.unifi_categories.
-  unifi_category_extra_columns = {
-    Dropbear     = [for n in ["SrcIpAddr", "SrcPortNumber"] : { name = n, type = "string" }]
-    Hostapd      = [for n in ["WlanId", "SrcType", "SrcMacAddr", "DstMacAddr", "Service"] : { name = n, type = "string" }]
-    Firewall     = [for n in ["FlowId", "DvcInboundInterface", "DvcOutboundInterface", "DvcAction", "NetworkRuleName", "DstMacAddr", "SrcMacAddr", "SrcIpAddr", "SrcPortNumber", "DstIpAddr", "DstPortNumber", "NetworkBytes", "Tos", "Prec", "Ttl", "NetworkProtocol", "Window", "Res", "Mark"] : { name = n, type = "string" }]
-    Stahtd       = [for n in ["SrcDvcMacAddr", "WlanId", "AssocStatus", "EventResult"] : { name = n, type = "string" }]
-    AssocTracker = [for n in ["WlanId", "SrcMacAddr", "EventResult"] : { name = n, type = "string" }]
-    StaEvent     = [for n in ["WlanId", "DvcAction", "SrcMacAddr", "SrcIpAddr"] : { name = n, type = "string" }]
-    Logread      = [for n in ["DstIpAddr", "DstPortNumber"] : { name = n, type = "string" }]
-    Stamgr       = [for n in ["DstMacAddr", "WlanId", "EventResultDetails"] : { name = n, type = "string" }]
-    Vpn          = [for n in ["VpnUser", "VpnClientIp", "VpnSourceIp", "VpnName", "VpnType", "VpnServerAddress", "VpnSubnet", "VpnWan", "VpnUtcTime", "VpnDuration", "VpnUsageDown", "VpnUsageUp"] : { name = n, type = "string" }]
-    WifiClient   = [for n in ["WifiClientAlias", "WifiClientHostname", "WifiClientIp", "WifiClientMac", "WifiChannel", "WifiChannelWidth", "WifiName", "WifiBand", "WifiAuthMethod", "WifiRssi", "WifiLastDeviceName", "WifiLastDeviceIp", "WifiLastDeviceMac", "WifiLastDeviceModel", "WifiConnectedDeviceName", "WifiConnectedDeviceIp", "WifiConnectedDeviceMac", "WifiConnectedDeviceModel", "WifiDuration", "WifiUsageDown", "WifiUsageUp", "WifiNetworkName", "WifiNetworkSubnet", "WifiNetworkVlan", "WifiUtcTime", "WifiLastConnectedToWiFiChannel", "WifiLastConnectedToWiFiChannelWidth", "WifiLastConnectedToWiFiBand", "WifiLastConnectedToWiFiRssi"] : { name = n, type = "string" }]
-    WiredClient  = [for n in ["WiredClientAlias", "WiredClientHostname", "WiredClientIp", "WiredClientMac", "WiredConnectedDeviceName", "WiredConnectedDevicePort", "WiredConnectedDeviceIp", "WiredConnectedDeviceMac", "WiredLinkSpeed", "WiredDuration", "WiredUsageDown", "WiredUsageUp", "WiredNetworkName", "WiredNetworkSubnet", "WiredNetworkVlan", "WiredUtcTime"] : { name = n, type = "string" }]
-
-    # Merged tables (multiple EventCategory values share one schema).
-    System = []
-    Dns    = [for n in ["SrcType", "DnsQuery", "DnsServer", "SrcIpAddr", "SrcPortNumber", "DstIpAddr", "DstPortNumber", "NetworkProtocol", "SrcMacAddr", "DstMacAddr"] : { name = n, type = "string" }]
+  # `extends` in local.mikrotik_categories, which parse the CEF `msg` body.
+  mikrotik_category_extra_columns = {
+    Firewall = [for n in ["NetworkRuleName", "Chain", "DvcAction", "DvcInboundInterface", "DvcOutboundInterface", "ConnectionState", "SrcMacAddr", "NetworkProtocol", "SrcIpAddr", "SrcPortNumber", "DstIpAddr", "DstPortNumber", "NatInfo", "NetworkBytes"] : { name = n, type = "string" }]
+    Dhcp     = [for n in ["DhcpServer", "DvcAction", "SrcIpAddr", "SrcMacAddr", "SrcHostname"] : { name = n, type = "string" }]
+    System   = [for n in ["DvcAction", "User", "SrcIpAddr", "Service"] : { name = n, type = "string" }]
+    Dns      = []
   }
 }
 
-module "table_ubiquiti" {
-  source = "./modules/law_table"
-
-  name             = "Ubiquiti${local.table_postifx}"
-  law_workspace_id = azurerm_log_analytics_workspace.law.id
-
-  retention_in_days      = 90
-  totalRetentionInDays   = 90
-  table_struct_file_path = "${local.struct_declaration_path}/Ubiquiti_CL_struct.json"
-}
-
-# One tailored _CL table per UniFi log category. Driven by local.unifi_categories
+# One tailored _CL table per MikroTik CEF topic. Driven by local.mikrotik_categories
 # (log_dcr.tf); each table's schema is the common columns plus the category's
-# entry in local.unifi_category_extra_columns above.
-module "unifi_tables" {
-  for_each = local.unifi_categories
+# entry in local.mikrotik_category_extra_columns above.
+module "mikrotik_tables" {
+  for_each = local.mikrotik_categories
   source   = "./modules/law_table"
 
-  name             = "Ubiquiti${each.key}${local.table_postifx}"
+  name             = "MikroTik${each.key}${local.table_postifx}"
   law_workspace_id = azurerm_log_analytics_workspace.law.id
 
   retention_in_days    = 90
   totalRetentionInDays = 90
-  columns              = concat(local.unifi_common_columns, local.unifi_category_extra_columns[each.key])
+  columns              = concat(local.mikrotik_common_columns, local.mikrotik_category_extra_columns[each.key])
 }
 
 # Tailscale output tables renames the raw API JSON into these PascalCase schemas.

@@ -59,5 +59,5 @@ resource "azapi_resource" "ueba" {
 
   schema_validation_enabled = false
 
-  depends_on = [ azapi_resource.entity_analytics ] # UEBA requires that entity analytics are enabled
+  depends_on = [azapi_resource.entity_analytics] # UEBA requires that entity analytics are enabled
 }
