@@ -1,100 +1,69 @@
-
 locals {
-  # Each known impacted-asset type maps to a fixed Graph identifier enum value.
-  # The identifier dictates which column the query must project for the asset to
-  # be bound (camelCase enum -> PascalCase column):
-  #   impactedDeviceAsset        -> deviceId        -> DeviceId
-  #   impactedUserAsset          -> accountObjectId -> AccountObjectId
-  #   impactedMailboxAsset       -> accountUpn      -> AccountUpn
-  #   impactedAzureResourceAsset -> azureResourceId -> ResourceUri (Azure resource entity)
-  # For types not in this map, pass impacted_assets[].identifier explicitly.
-  asset_identifiers = {
-    impactedDeviceAsset        = "deviceId"
-    impactedUserAsset          = "accountObjectId"
-    impactedMailboxAsset       = "accountUpn"
-    impactedAzureResourceAsset = "azureResourceId"
-  }
+  # Optional metadata header rendered as KQL `//` comment lines.
+  metadata = var.metadata == null ? "" : trimspace(join("\n", concat(
+    ["// Author: ${var.metadata.author}"],
+    var.metadata.website == null ? [] : ["// Website: ${var.metadata.website}"],
+    length(var.metadata.references) > 0 ? concat(["// References:"], [for r in var.metadata.references : "// - ${r}"]) : [],
+  )))
 
-  # Optional metadata header, rendered as KQL // comment lines.
-  metadata = var.metadata == null ? "" : join("\n", concat(
-    [
-      "// Author: ${var.metadata.author}",
-      "// Website: ${var.metadata.website}",
-      "// References:",
-    ],
-    [for reference in var.metadata.references : "// - ${reference}"],
-  ))
-
-  # Map the convenient impacted_assets input onto the @odata.type-tagged objects
-  # the Graph API expects. The identifier comes from the per-asset override when
-  # given, otherwise the known map above.
-  impacted_assets = [
-    for asset in var.impacted_assets : {
-      "@odata.type" = "#microsoft.graph.security.${asset.odata_type}"
-      identifier    = coalesce(asset.identifier, lookup(local.asset_identifiers, asset.odata_type, null))
-    }
-  ]
-
-  # Optionally strip KQL `//` line comments from the query. Two passes:
-  #   1. whole-line comments — drop the entire line, including its newline, so
-  #      no blank line is left behind ((?m) makes ^ match each line start);
-  #   2. inline comments — drop the trailing `// ...` but keep the code.
-  # trimspace tidies the edges.
+  # Optionally strip KQL `//` line comments (whole-line then inline); otherwise
+  # prepend the metadata header when one is supplied.
   query_text = var.strip_comments ? trimspace(replace(
     replace(var.query_text, "/(?m)^[ \\t]*//.*\\n?/", ""),
     "/[ \\t]*//.*/",
     "",
   )) : (var.metadata == null ? var.query_text : "${local.metadata}\n${var.query_text}")
 
-  # Build each response action: the @odata.type tag, an optional identifier,
-  # and any action-specific settings merged in verbatim.
-  response_actions = [
-    for action in var.response_actions : merge(
-      {
-        "@odata.type" = "#microsoft.graph.security.${action.type}"
-      },
-      action.identifier == null ? {} : { identifier = action.identifier },
-      action.settings,
-    )
+  # mitre_tactics -> the API's tactics[] shape ({ tactic, techniques:[{technique}] }).
+  tactics = [
+    for t in var.mitre_tactics : {
+      tactic     = t.tactic
+      techniques = [for technique in t.techniques : { technique = technique }]
+    }
   ]
+
+  alert_template = merge(
+    {
+      title       = coalesce(var.alert_title, var.display_name)
+      description = var.alert_description
+      severity    = var.severity
+    },
+    var.category != null ? { category = var.category } : {},
+    var.recommended_actions != null ? { recommendedActions = var.recommended_actions } : {},
+    length(local.tactics) > 0 ? { tactics = local.tactics } : {},
+    var.entity_mappings != null ? { entityMappings = var.entity_mappings } : {},
+  )
+
+  # detection_action_extra carries the volatile parts of detectionAction verbatim
+  # (e.g. automatedActions, organizationalScope) so the module stays correct as
+  # the beta schema evolves.
+  detection_action = merge(
+    { alertTemplate = local.alert_template },
+    var.detection_action_extra,
+  )
+
+  body = merge(
+    {
+      id              = var.rule_id
+      displayName     = var.display_name
+      status          = var.is_enabled ? "enabled" : "disabled"
+      queryCondition  = { queryText = local.query_text }
+      schedule        = { frequency = var.schedule_frequency }
+      detectionAction = local.detection_action
+    },
+    var.description != null ? { description = var.description } : {},
+  )
 }
 
 resource "msgraph_resource" "detection_rule" {
   url         = "security/rules/detectionRules"
   api_version = "beta"
-  body = {
-    displayName = var.display_name
-    isEnabled   = var.is_enabled
+  body        = local.body
 
-    queryCondition = {
-      queryText = local.query_text
-    }
-
-    schedule = {
-      period = var.schedule_period
-    }
-
-    detectionAction = {
-      organizationalScope = var.organizational_scope
-      responseActions     = local.response_actions
-
-      alertTemplate = {
-        title              = var.alert_title
-        description        = var.alert_description
-        severity           = var.severity
-        category           = var.category
-        recommendedActions = var.recommended_actions
-        mitreTechniques    = var.mitre_techniques
-        impactedAssets     = local.impacted_assets
-      }
-    }
-  }
-
-  # Export server-assigned fields (export name => JMESPath into the response)
-  # so they are available as outputs.
+  # export name => JMESPath into the response
   response_export_values = {
     id                   = "id"
-    detectorId           = "detectorId"
+    status               = "status"
     createdDateTime      = "createdDateTime"
     lastModifiedDateTime = "lastModifiedDateTime"
   }
