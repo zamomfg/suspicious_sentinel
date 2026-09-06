@@ -93,6 +93,11 @@ variable "mitre_tactics" {
     techniques = optional(list(string), [])
   }))
   default = []
+
+  validation {
+    condition     = length(var.mitre_tactics) <= 1
+    error_message = "The detectionRules API supports a single MITRE tactic; provide at most one entry in mitre_tactics (its techniques list may hold several)."
+  }
 }
 
 variable "entity_mappings" {

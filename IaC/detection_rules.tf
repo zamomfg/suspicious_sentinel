@@ -28,9 +28,11 @@ module "detect_ssh_public_ip_login" {
   category            = "InitialAccess"
   recommended_actions = "Confirm the source IP and account are expected (e.g. Azure Cloud Shell / az ssh arc). If not, isolate the host and reset the account's credentials."
 
+  # The detectionRules API allows a single tactic. SSH from a public IP is
+  # treated as Initial Access with valid credentials (T1078); the SSH-specific
+  # T1021.004 (Lateral Movement) is noted here but can't be a second tactic.
   mitre_tactics = [
     { tactic = "InitialAccess", techniques = ["T1078"] },
-    { tactic = "LateralMovement", techniques = ["T1021.004"] },
   ]
 
   entity_mappings = {
