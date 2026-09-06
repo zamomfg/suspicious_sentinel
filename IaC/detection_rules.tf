@@ -4,8 +4,10 @@
 # Successful SSH logon to a Linux/Arc host from a public (non-RFC1918) source IP.
 # Fires, for example, when someone reaches an Azure Arc-enabled server over SSH
 # from Azure Cloud Shell (`az ssh arc`), whose egress is a public Azure IP.
-# Runs hourly rather than NRT: the NRT streaming engine doesn't support the
-# ipv4_* functions this query relies on for the public-IP check.
+# Runs continuously (NRT). The NRT streaming engine can't compile the ipv4_*
+# functions, so the public-IP check excludes RFC1918 / loopback / link-local
+# ranges with plain string-prefix matches (incl. 172.16.0.0/12 as explicit
+# per-/16 prefixes, since `matches regex` isn't guaranteed in the NRT engine).
 module "detect_ssh_public_ip_login" {
   source = "./modules/detection_rule"
 
@@ -13,14 +15,20 @@ module "detect_ssh_public_ip_login" {
   display_name       = "SSH login to a Linux host from a public IP address"
   description        = "A successful SSH logon to a Linux (incl. Azure Arc) host originated from a non-private source IP. Expected when connecting via Azure Cloud Shell / `az ssh arc`; otherwise may indicate remote access with valid credentials."
   severity           = "medium"
-  schedule_frequency = "PT1H"
+  schedule_frequency = "PT0S" # continuous / NRT
 
   query_text = <<-KQL
     DeviceLogonEvents
     | where ActionType == "LogonSuccess"
     | where InitiatingProcessFileName in~ ("sshd", "sshd-session")
-    | where isnotempty(RemoteIP) and not(ipv4_is_private(RemoteIP))
-    | where RemoteIP != "127.0.0.1" and RemoteIP != "::1"
+    | where isnotempty(RemoteIP)
+    | where not(RemoteIP startswith "10." or RemoteIP startswith "192.168."
+        or RemoteIP startswith "172.16." or RemoteIP startswith "172.17." or RemoteIP startswith "172.18." or RemoteIP startswith "172.19."
+        or RemoteIP startswith "172.20." or RemoteIP startswith "172.21." or RemoteIP startswith "172.22." or RemoteIP startswith "172.23."
+        or RemoteIP startswith "172.24." or RemoteIP startswith "172.25." or RemoteIP startswith "172.26." or RemoteIP startswith "172.27."
+        or RemoteIP startswith "172.28." or RemoteIP startswith "172.29." or RemoteIP startswith "172.30." or RemoteIP startswith "172.31."
+        or RemoteIP startswith "127." or RemoteIP startswith "169.254."
+        or RemoteIP == "::1" or RemoteIP startswith "fe80:" or RemoteIP startswith "fc" or RemoteIP startswith "fd")
     | project Timestamp, ReportId, DeviceId, DeviceName, AccountName, AccountDomain, AccountSid, RemoteIP, LogonType, InitiatingProcessFileName
   KQL
 
