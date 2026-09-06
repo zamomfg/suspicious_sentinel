@@ -4,7 +4,8 @@
 # Successful SSH logon to a Linux/Arc host from a public (non-RFC1918) source IP.
 # Fires, for example, when someone reaches an Azure Arc-enabled server over SSH
 # from Azure Cloud Shell (`az ssh arc`), whose egress is a public Azure IP.
-# Single-table query so it is eligible for continuous (NRT) evaluation.
+# Runs hourly rather than NRT: the NRT streaming engine doesn't support the
+# ipv4_* functions this query relies on for the public-IP check.
 module "detect_ssh_public_ip_login" {
   source = "./modules/detection_rule"
 
@@ -12,7 +13,7 @@ module "detect_ssh_public_ip_login" {
   display_name       = "SSH login to a Linux host from a public IP address"
   description        = "A successful SSH logon to a Linux (incl. Azure Arc) host originated from a non-private source IP. Expected when connecting via Azure Cloud Shell / `az ssh arc`; otherwise may indicate remote access with valid credentials."
   severity           = "medium"
-  schedule_frequency = "PT0S" # continuous / NRT
+  schedule_frequency = "PT1H"
 
   query_text = <<-KQL
     DeviceLogonEvents
