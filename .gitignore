@@ -8,3 +8,6 @@ logger.conf
 var.env
 
 .vscode
+# Python
+__pycache__/
+*.pyc

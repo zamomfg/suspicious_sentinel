@@ -3,9 +3,9 @@ output "id" {
   value       = try(msgraph_resource.detection_rule.output.id, null)
 }
 
-output "detector_id" {
-  description = "The detector ID associated with the rule."
-  value       = try(msgraph_resource.detection_rule.output.detectorId, null)
+output "status" {
+  description = "The current run status of the rule (enabled/disabled/autoDisabled)."
+  value       = try(msgraph_resource.detection_rule.output.status, null)
 }
 
 output "display_name" {
