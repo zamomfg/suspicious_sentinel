@@ -4,7 +4,7 @@
     {
       "type": 1,
       "content": {
-        "json": "# Data Ingestion Monitor\nTracks billable ingestion by table and by source machine, plus the Microsoft Defender for Servers P2 500 MB/day free-benefit usage. Use the **Unit** toggle to switch between MB and GB."
+        "json": "# Data Ingestion Monitor\nBillable ingestion by table and source machine, plus DCR pipeline health from metrics. Use the **Unit** toggle for MB/GB. Volumes are computed from each record's `_BilledSize` (includes ASIM native tables, which the `Usage` table does not always report)."
       },
       "name": "title"
     },
@@ -83,7 +83,7 @@
       "type": 3,
       "content": {
         "version": "KqlItem/1.0",
-        "query": "Usage\n| where IsBillable\n| summarize Ingested = round(sum(Quantity) / iff(\"{Unit}\" == \"GB\", 1024.0, 1.0), 4) by bin(TimeGenerated, {TimeRange:grain}), DataType\n| render timechart",
+        "query": "union withsource=_Tbl *\n| where _BilledSize > 0\n| summarize Ingested = round(sum(_BilledSize) / iff(\"{Unit}\" == \"GB\", 1073741824.0, 1048576.0), 4) by bin(TimeGenerated, {TimeRange:grain}), _Tbl",
         "size": 0,
         "timeContextFromParameter": "TimeRange",
         "queryType": 0,
@@ -96,7 +96,7 @@
       "type": 3,
       "content": {
         "version": "KqlItem/1.0",
-        "query": "Usage\n| where IsBillable\n| summarize ['Ingested ({Unit})'] = round(sum(Quantity) / iff(\"{Unit}\" == \"GB\", 1024.0, 1.0), 4) by ['Table'] = DataType\n| sort by ['Ingested ({Unit})'] desc",
+        "query": "union withsource=_Tbl *\n| where _BilledSize > 0\n| summarize ['Ingested ({Unit})'] = round(sum(_BilledSize) / iff(\"{Unit}\" == \"GB\", 1073741824.0, 1048576.0), 4), ['Records'] = count() by ['Table'] = _Tbl\n| sort by ['Ingested ({Unit})'] desc",
         "size": 0,
         "timeContextFromParameter": "TimeRange",
         "queryType": 0,
@@ -108,7 +108,40 @@
     {
       "type": 1,
       "content": {
-        "json": "## Ingestion by source machine\nAttributed via each record's `_ResourceId` / `_BilledSize`. There is no per-machine ingestion *metric* (Azure Monitor metrics are per-DCR only), so machine attribution comes from the logs. Data ingested through a DCE (e.g. Tailscale) is attributed to the DCR, not a machine, and is excluded here."
+        "json": "## Pipeline tables (this project)\nTotal ingested to the specific tables written by this project's DCR pipelines (MikroTik firewall/DHCP/system/DNS + Tailscale + Syslog). Edit the `PipelineTables` list in the query as pipelines change."
+      },
+      "name": "h-pipeline"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "let PipelineTables = dynamic([\"ASimNetworkSessionLogs\", \"ASimDhcpEventLogs\", \"MikroTikSystem_CL\", \"MikroTikDns_CL\", \"MikroTikFirewall_CL\", \"MikroTikDhcp_CL\", \"Syslog\", \"TailscaleNetworkLogs_CL\", \"TailscaleAuditLogs_CL\"]);\nunion withsource=_Tbl *\n| where _BilledSize > 0 and _Tbl in (PipelineTables)\n| summarize ['Ingested ({Unit})'] = round(sum(_BilledSize) / iff(\"{Unit}\" == \"GB\", 1073741824.0, 1048576.0), 4) by bin(TimeGenerated, {TimeRange:grain}), _Tbl",
+        "size": 0,
+        "timeContextFromParameter": "TimeRange",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "visualization": "timechart"
+      },
+      "name": "pipeline-timechart"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "let PipelineTables = dynamic([\"ASimNetworkSessionLogs\", \"ASimDhcpEventLogs\", \"MikroTikSystem_CL\", \"MikroTikDns_CL\", \"MikroTikFirewall_CL\", \"MikroTikDhcp_CL\", \"Syslog\", \"TailscaleNetworkLogs_CL\", \"TailscaleAuditLogs_CL\"]);\nunion withsource=_Tbl *\n| where _BilledSize > 0 and _Tbl in (PipelineTables)\n| summarize ['Ingested ({Unit})'] = round(sum(_BilledSize) / iff(\"{Unit}\" == \"GB\", 1073741824.0, 1048576.0), 4), ['Records'] = count() by ['Table'] = _Tbl\n| sort by ['Ingested ({Unit})'] desc",
+        "size": 0,
+        "timeContextFromParameter": "TimeRange",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "visualization": "table"
+      },
+      "name": "pipeline-grid"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "## Ingestion by source machine\nAttributed via each record's `_ResourceId` / `_BilledSize`. There is no per-machine ingestion *metric* (Azure Monitor metrics are per-DCR only), so machine attribution comes from the logs. DCE-ingested data (e.g. Tailscale) is attributed to the DCR, not a machine, and is excluded here."
       },
       "name": "h-machines"
     },
@@ -129,7 +162,7 @@
       "type": 3,
       "content": {
         "version": "KqlItem/1.0",
-        "query": "union withsource=_Tbl *\n| where _BilledSize > 0\n| where _ResourceId has \"/providers/microsoft.hybridcompute/machines/\" or _ResourceId has \"/providers/microsoft.compute/virtualmachines/\"\n| extend Machine = tostring(split(_ResourceId, \"/\")[-1])\n| summarize Ingested = round(sum(_BilledSize) / iff(\"{Unit}\" == \"GB\", 1073741824.0, 1048576.0), 4) by bin(TimeGenerated, {TimeRange:grain}), Machine\n| render timechart",
+        "query": "union withsource=_Tbl *\n| where _BilledSize > 0\n| where _ResourceId has \"/providers/microsoft.hybridcompute/machines/\" or _ResourceId has \"/providers/microsoft.compute/virtualmachines/\"\n| extend Machine = tostring(split(_ResourceId, \"/\")[-1])\n| summarize Ingested = round(sum(_BilledSize) / iff(\"{Unit}\" == \"GB\", 1073741824.0, 1048576.0), 4) by bin(TimeGenerated, {TimeRange:grain}), Machine",
         "size": 0,
         "timeContextFromParameter": "TimeRange",
         "queryType": 0,
@@ -141,55 +174,68 @@
     {
       "type": 1,
       "content": {
-        "json": "## Ingestion by DCR (from metrics)\nDCR `BytesReceived_Count` metric via `AzureMetrics`. A DCR maps to machines through its associations (config, not logs); a DCR can serve several machines and vice-versa, so this is a rule-level view."
+        "json": "## DCR pipeline metrics \u2014 rows\nFrom the DCR platform metrics (`AzureMetrics`). Ingested (received), dropped (filtered out or errored), and transformation errors per rule. A high `Drop %` is expected here because the MikroTik DCR intentionally filters out non-matching syslog. The transformation-errors series/column only appears once it is non-zero."
       },
-      "name": "h-dcr"
+      "name": "h-metrics"
     },
     {
       "type": 3,
       "content": {
         "version": "KqlItem/1.0",
-        "query": "AzureMetrics\n| where ResourceProvider == \"MICROSOFT.INSIGHTS\" and ResourceId has \"/DATACOLLECTIONRULES/\"\n| where MetricName == \"BytesReceived_Count\"\n| extend DCR = tostring(split(ResourceId, \"/\")[-1])\n| summarize Ingested = round(sum(Total) / iff(\"{Unit}\" == \"GB\", 1073741824.0, 1048576.0), 4) by bin(TimeGenerated, {TimeRange:grain}), DCR\n| render timechart",
+        "query": "AzureMetrics\n| where ResourceId has \"/DATACOLLECTIONRULES/\"\n| where MetricName in (\"RowsReceived_Count\", \"RowsDropped_Count\", \"TransformationErrors_Count\")\n| summarize Rows = sum(Total) by bin(TimeGenerated, {TimeRange:grain}), MetricName",
         "size": 0,
         "timeContextFromParameter": "TimeRange",
         "queryType": 0,
         "resourceType": "microsoft.operationalinsights/workspaces",
         "visualization": "timechart"
       },
-      "name": "dcr-metrics-timechart"
-    },
-    {
-      "type": 1,
-      "content": {
-        "json": "## Defender for Servers P2 \u2014 500 MB/day free benefit\nThe benefit covers **only** these security data types, per node, per day: SecurityAlert, SecurityBaseline(Summary), SecurityDetection, SecurityEvent, WindowsFirewall, ProtectionStatus, Update/UpdateSummary, MDCFileIntegrityMonitoringEvents, WindowsEvent, LinuxAuditLog. Generic Syslog, custom `_CL`, and ASIM tables are **not** included, so MikroTik data does not consume this allowance. `Over free (MB)` above 0 means that machine/day exceeded the free 500 MB and the excess is billable. Empty = no eligible security data collected yet."
-      },
-      "name": "h-defender"
+      "name": "rows-timechart"
     },
     {
       "type": 3,
       "content": {
         "version": "KqlItem/1.0",
-        "query": "let FreeTypes = dynamic([\"SecurityAlert\",\"SecurityBaseline\",\"SecurityBaselineSummary\",\"SecurityDetection\",\"SecurityEvent\",\"WindowsFirewall\",\"ProtectionStatus\",\"Update\",\"UpdateSummary\",\"MDCFileIntegrityMonitoringEvents\",\"WindowsEvent\",\"LinuxAuditLog\"]);\nunion withsource=_Tbl *\n| where _BilledSize > 0 and _Tbl in (FreeTypes)\n| extend Machine = tostring(split(_ResourceId, \"/\")[-1])\n| where isnotempty(Machine)\n| summarize EligibleMB = round(sum(_BilledSize) / 1048576.0, 3) by bin(TimeGenerated, 1d), Machine\n| render columnchart",
-        "size": 0,
-        "timeContextFromParameter": "TimeRange",
-        "queryType": 0,
-        "resourceType": "microsoft.operationalinsights/workspaces",
-        "visualization": "columnchart"
-      },
-      "name": "defender-columnchart"
-    },
-    {
-      "type": 3,
-      "content": {
-        "version": "KqlItem/1.0",
-        "query": "let FreeTypes = dynamic([\"SecurityAlert\",\"SecurityBaseline\",\"SecurityBaselineSummary\",\"SecurityDetection\",\"SecurityEvent\",\"WindowsFirewall\",\"ProtectionStatus\",\"Update\",\"UpdateSummary\",\"MDCFileIntegrityMonitoringEvents\",\"WindowsEvent\",\"LinuxAuditLog\"]);\nunion withsource=_Tbl *\n| where _BilledSize > 0 and _Tbl in (FreeTypes)\n| extend Machine = tostring(split(_ResourceId, \"/\")[-1])\n| where isnotempty(Machine)\n| summarize ['Eligible ingestion (MB)'] = round(sum(_BilledSize) / 1048576.0, 3)\n    by ['Day'] = startofday(TimeGenerated), Machine\n| extend ['Free allowance (MB)'] = 500.0\n| extend ['Over free (MB)'] = round(['Eligible ingestion (MB)'] - 500.0, 3)\n| sort by ['Day'] desc, Machine asc",
+        "query": "AzureMetrics\n| where ResourceId has \"/DATACOLLECTIONRULES/\"\n| extend DCR = tostring(split(ResourceId, \"/\")[-1])\n| summarize ['Received'] = sum(iif(MetricName == \"RowsReceived_Count\", Total, 0.0)),\n            ['Dropped'] = sum(iif(MetricName == \"RowsDropped_Count\", Total, 0.0)),\n            ['Transform errors'] = sum(iif(MetricName == \"TransformationErrors_Count\", Total, 0.0)),\n            ['Columns dropped'] = sum(iif(MetricName == \"ColumnsDroppedCount\", Total, 0.0))\n    by ['DCR'] = DCR\n| extend ['Drop %'] = round(100.0 * ['Dropped'] / ['Received'], 1)\n| sort by ['Received'] desc",
         "size": 0,
         "timeContextFromParameter": "TimeRange",
         "queryType": 0,
         "resourceType": "microsoft.operationalinsights/workspaces",
         "visualization": "table"
       },
-      "name": "defender-grid"
+      "name": "rows-grid"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "## Transformation time\nDCR `TransformationRuntime_DurationMs` metric \u2014 how long the per-record KQL transform takes. Watch this after adding external calls such as `geo_location()`."
+      },
+      "name": "h-transform"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "AzureMetrics\n| where ResourceId has \"/DATACOLLECTIONRULES/\"\n| where MetricName == \"TransformationRuntime_DurationMs\"\n| extend DCR = tostring(split(ResourceId, \"/\")[-1])\n| summarize ['Avg duration (ms)'] = round(avg(Average), 2) by bin(TimeGenerated, {TimeRange:grain}), DCR",
+        "size": 0,
+        "timeContextFromParameter": "TimeRange",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "visualization": "timechart"
+      },
+      "name": "transform-timechart"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "AzureMetrics\n| where ResourceId has \"/DATACOLLECTIONRULES/\"\n| where MetricName == \"TransformationRuntime_DurationMs\"\n| extend DCR = tostring(split(ResourceId, \"/\")[-1])\n| summarize ['Avg (ms)'] = round(avg(Average), 2), ['Max (ms)'] = round(max(Maximum), 2) by ['DCR'] = DCR\n| sort by ['Avg (ms)'] desc",
+        "size": 0,
+        "timeContextFromParameter": "TimeRange",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "visualization": "table"
+      },
+      "name": "transform-grid"
     }
   ],
   "$schema": "https://github.com/Microsoft/Application-Insights-Workbooks/blob/master/schema/workbook.json"
