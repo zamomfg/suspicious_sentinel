@@ -10,7 +10,7 @@ module "internal_hosts" {
   display_name               = "Internal hosts"
   item_search_key            = "Host"
   log_analytics_workspace_id = azurerm_log_analytics_workspace.law_sc.id
-  file_path                  = "${local.watchlist_data_base_dir}test_hosts.csv"
+  file_path                  = "${local.watchlist_data_base_dir}hosts.csv"
   encrypted                  = true
 }
 
