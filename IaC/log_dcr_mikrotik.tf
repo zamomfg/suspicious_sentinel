@@ -8,30 +8,34 @@ locals {
   # Projection of the common columns (Message is the raw SyslogMessage).
   mikrotik_common_projection = "TimeGenerated,EventVendor,EventProduct,EventVersion,Hostname,DvcIpAddr,EventCategory,DeviceEventClassId,EventSeverity,EventMessage,Message"
 
-  # Identify MikroTik by the CEF vendor header rather than a hostname, so this
-  # works regardless of what the router is named.
+  # RouterOS emits native topic-prefixed syslog (e.g. "firewall,info <body>"),
+  # not CEF. Positively identify it by the "topic,severity " message shape and
+  # (when set) the router source host/IP, so other syslog sources on the shared
+  # collector are filtered out.
   mikrotik_source = <<-KQL
     source
     | extend Message = SyslogMessage
-    | where Message startswith "CEF:0|MikroTik|"
+    | where Message matches regex @'^[a-z][a-z0-9-]*(?:,[a-z][a-z0-9-]*)+ '
   KQL
 
-  # Shared extends producing the common columns. Parses the CEF header (fields
-  # split by `|`) and the extension (dvchost/dvc/msg). EventCategory is the first
-  # topic in the CEF Name field (e.g. "firewall,info" -> "firewall").
+  mikrotik_host_filter = var.mikrotik_source_host == "" ? "" : "| where HostName == '${var.mikrotik_source_host}' or HostIP == '${var.mikrotik_source_host}'"
+
+  # Shared extends producing the common columns from native RouterOS syslog. The
+  # comma-joined topic list is the first whitespace-delimited token (CefName, e.g.
+  # "firewall,info"); the body is everything after it. EventCategory/EventSeverity
+  # are the first two topics. Product/Version/DeviceEventClassId have no native
+  # equivalent and stay empty.
   mikrotik_common_extends = <<-KQL
     | extend EventVendor = 'MikroTik'
-    | extend EventProduct = extract(@'^CEF:\d+\|[^|]*\|([^|]*)\|', 1, Message)
-    | extend EventVersion = extract(@'^CEF:\d+\|[^|]*\|[^|]*\|([^|]*)\|', 1, Message)
-    | extend DeviceEventClassId = extract(@'^CEF:\d+\|[^|]*\|[^|]*\|[^|]*\|([^|]*)\|', 1, Message)
-    | extend CefName = extract(@'^CEF:\d+\|[^|]*\|[^|]*\|[^|]*\|[^|]*\|([^|]*)\|', 1, Message)
-    | extend EventSeverity = extract(@'^CEF:\d+\|[^|]*\|[^|]*\|[^|]*\|[^|]*\|[^|]*\|([^|]*)\|', 1, Message)
-    | extend CefExtension = extract(@'^CEF:\d+(?:\|[^|]*){6}\|(.*)$', 1, Message)
-    | extend Hostname = extract(@'dvchost=(\S+)', 1, CefExtension)
-    | extend Hostname = iif(Hostname == '', HostName, Hostname)
-    | extend DvcIpAddr = extract(@'dvc=(\S+)', 1, CefExtension)
-    | extend EventMessage = extract(@'msg=(.*)$', 1, CefExtension)
+    | extend EventProduct = ''
+    | extend EventVersion = ''
+    | extend DeviceEventClassId = ''
+    | extend CefName = extract(@'^(\S+)\s', 1, Message)
+    | extend EventMessage = extract(@'^\S+\s+(.*)$', 1, Message)
+    | extend Hostname = HostName
+    | extend DvcIpAddr = HostIP
     | extend EventCategory = tostring(split(CefName, ',')[0])
+    | extend EventSeverity = tostring(split(CefName, ',')[1])
   KQL
 
   # Category-specific projection columns, taken from the same source the tables
@@ -126,6 +130,7 @@ module "dcr_mikrotik" {
       output_stream = "${local.custom_stream_prefix}${module.mikrotik_tables[k].name}"
       transform_kql = join("\n", compact([
         trimspace(local.mikrotik_source),
+        trimspace(local.mikrotik_host_filter),
         trimspace(local.mikrotik_common_extends),
         trimspace(c.filter),
         trimspace(c.extends),

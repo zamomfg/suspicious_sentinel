@@ -18,6 +18,7 @@ env:
   ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
   ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
   TF_VAR_current_sp_id: ${{ secrets.AZURE_CLIENT_ID }} # Used for getting the id of the current SP
+  TF_VAR_mikrotik_source_host: ${{ secrets.MIKROTIK_SOURCE_HOST }} # Router source host/IP to identify MikroTik syslog (internal; add as a repo/environment secret)
   TF_VAR_maxmind_account_id: ${{ secrets.MAXMIND_ACCOUNT_ID }} # MaxMind account ID (add as a repo/environment secret)
   TF_VAR_maxmind_license_key: ${{ secrets.MAXMIND_LICENSE_KEY }} # MaxMind GeoLite2 license key (add as a repo/environment secret)
   TF_VAR_security_insights_object_id: ${{ secrets.AZURE_SECURITY_INSIGHTS_OBJECT_ID }} # Object id of the Azure Security Insights SP, to grant playbook run permission
