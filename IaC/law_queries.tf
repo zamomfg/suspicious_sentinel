@@ -23,9 +23,10 @@ resource "azurerm_log_analytics_query_pack_query" "asn_func_runs" {
   EOT
 }
 
-# Aggregator parser over the per-topic MikroTik tables. Parsing is done at
-# transform time (log_dcr.tf), so this just unions the split tables behind one
-# alias for querying.
+# Aggregator parser giving one alias over all MikroTik events. Firewall and DHCP
+# are normalized into the ASIM tables (filtered to the MikroTik vendor here);
+# System and DNS remain in their custom tables. Parsing is done at transform time
+# (log_dcr_mikrotik.tf).
 resource "azurerm_log_analytics_saved_search" "mikrotik_event_aggregator" {
   name                       = "MikroTikEvent"
   function_alias             = "MikroTikEvent"
@@ -33,7 +34,12 @@ resource "azurerm_log_analytics_saved_search" "mikrotik_event_aggregator" {
   category                   = "Microsoft Sentinel Parser"
   log_analytics_workspace_id = azurerm_log_analytics_workspace.law_sc.id
 
-  query = "union isfuzzy=true ${join(", ", [for k in keys(local.mikrotik_categories) : module.mikrotik_tables[k].name])}"
+  query = <<-EOT
+    union isfuzzy=true
+      ${join(", ", [for k in keys(local.mikrotik_categories) : module.mikrotik_tables[k].name])},
+      (ASimNetworkSessionLogs | where EventVendor == "MikroTik"),
+      (ASimDhcpEventLogs | where EventVendor == "MikroTik")
+  EOT
 }
 
 resource "azurerm_log_analytics_saved_search" "unified_sign_in_logs" {

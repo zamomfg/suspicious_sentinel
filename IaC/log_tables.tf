@@ -1,8 +1,8 @@
 locals {
   table_postifx = "_CL"
 
-  # Columns present on every MikroTik table. Sourced from the CEF envelope
-  # (header + dvchost/dvc/msg extension); Message is the raw SyslogMessage.
+  # Columns present on every custom MikroTik table (System/DNS). Sourced from the
+  # native RouterOS topic header; Message is the raw SyslogMessage.
   mikrotik_common_columns = concat(
     [{ name = "TimeGenerated", type = "datetime" }],
     [for n in [
@@ -11,22 +11,20 @@ locals {
     ] : { name = n, type = "string" }]
   )
 
-  # Category-specific columns per table (all string). Single source of truth:
-  # module.mikrotik_tables builds each table schema from common + these, and the
-  # dcr_mikrotik transform projection (log_dcr.tf) derives its category columns
-  # from the same map. Every column here must be produced by the category's
-  # `extends` in local.mikrotik_categories, which parse the CEF `msg` body.
+  # Category-specific columns per still-custom table (all string). Single source
+  # of truth: module.mikrotik_tables builds each table schema from common + these,
+  # and the System/DNS transform projections (log_dcr_mikrotik.tf) derive their
+  # category columns from the same map. Firewall and DHCP are normalized into the
+  # ASIM tables instead and have no custom table here.
   mikrotik_category_extra_columns = {
-    Firewall = [for n in ["NetworkRuleName", "Chain", "DvcAction", "DvcInboundInterface", "DvcOutboundInterface", "ConnectionState", "SrcMacAddr", "NetworkProtocol", "SrcIpAddr", "SrcPortNumber", "DstIpAddr", "DstPortNumber", "NatInfo", "NetworkBytes"] : { name = n, type = "string" }]
-    Dhcp     = [for n in ["DhcpServer", "DvcAction", "SrcIpAddr", "SrcMacAddr", "SrcHostname"] : { name = n, type = "string" }]
-    System   = [for n in ["DvcAction", "User", "SrcIpAddr", "Service"] : { name = n, type = "string" }]
-    Dns      = []
+    System = [for n in ["DvcAction", "User", "SrcIpAddr", "Service"] : { name = n, type = "string" }]
+    Dns    = []
   }
 }
 
-# One tailored _CL table per MikroTik CEF topic. Driven by local.mikrotik_categories
-# (log_dcr.tf); each table's schema is the common columns plus the category's
-# entry in local.mikrotik_category_extra_columns above.
+# One tailored _CL table per still-custom MikroTik topic (System/DNS). Driven by
+# local.mikrotik_categories (log_dcr_mikrotik.tf); each table's schema is the
+# common columns plus the category's entry in local.mikrotik_category_extra_columns.
 module "mikrotik_tables" {
   for_each = local.mikrotik_categories
   source   = "./modules/law_table"
