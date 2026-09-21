@@ -9,14 +9,13 @@ locals {
   mikrotik_common_projection = "TimeGenerated,EventVendor,EventProduct,EventVersion,Hostname,DvcIpAddr,EventCategory,DeviceEventClassId,EventSeverity,EventMessage,Message"
 
   # RouterOS emits native topic-prefixed syslog (e.g. "firewall,info <body>"),
-  # not CEF. The "topic,severity " message shape distinguishes MikroTik from any
-  # other source added to this collector later; the HostIP clause pins collection
-  # to the Arc syslog collector (10.42.0.1 is its local container address, not a
-  # device on the network).
+  # not CEF. Identify it by the "topic,severity " message shape, which also keeps
+  # out any other source added to this collector later. (HostIP is not usable
+  # here: it is empty in the Microsoft-Syslog stream fed to the transform even
+  # though the Syslog table shows it populated.)
   mikrotik_source = <<-KQL
     source
     | extend Message = SyslogMessage
-    | where HostIP == '10.42.0.1'
     | where Message matches regex @'^[a-z][a-z0-9-]*(?:,[a-z][a-z0-9-]*)+ '
   KQL
 
