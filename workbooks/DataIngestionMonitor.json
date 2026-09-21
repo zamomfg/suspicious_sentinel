@@ -96,7 +96,7 @@
       "type": 3,
       "content": {
         "version": "KqlItem/1.0",
-        "query": "union withsource=_Tbl *\n| where _BilledSize > 0\n| summarize ['Ingested ({Unit})'] = round(sum(_BilledSize) / iff(\"{Unit}\" == \"GB\", 1073741824.0, 1048576.0), 4), ['Records'] = count() by ['Table'] = _Tbl\n| sort by ['Ingested ({Unit})'] desc",
+        "query": "union withsource=_Tbl *\n| summarize ['Records'] = count(), _Bytes = sum(_BilledSize), _BillableRecs = countif(_IsBillable == true) by ['Table'] = _Tbl\n| extend ['Ingested ({Unit})'] = round(_Bytes / iff(\"{Unit}\" == \"GB\", 1073741824.0, 1048576.0), 4), ['Billable'] = _BillableRecs > 0\n| project ['Table'], ['Ingested ({Unit})'], ['Records'], ['Billable']\n| sort by ['Ingested ({Unit})'] desc",
         "size": 0,
         "timeContextFromParameter": "TimeRange",
         "queryType": 0,
