@@ -94,7 +94,7 @@ data "azapi_resource" "data_dcr" {
 resource "azurerm_monitor_data_collection_rule_association" "dcra_virtual_machine" {
   count = var.vm_association_ids == null ? 0 : length(var.vm_association_ids)
 
-  name                    = "dcra-${count.index}"
+  name                    = "dcra-${var.name}-${count.index}"
   target_resource_id      = var.vm_association_ids[count.index]
   data_collection_rule_id = azurerm_monitor_data_collection_rule.dcr.id
 }

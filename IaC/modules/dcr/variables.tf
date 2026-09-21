@@ -74,7 +74,7 @@ variable "data_flows" {
 
   validation {
     condition = alltrue([
-      for df in var.data_flows : length(coalesce(df.transform_kql, "")) <= 15360
+      for df in var.data_flows : length(df.transform_kql == null ? "" : df.transform_kql) <= 15360
     ])
     error_message = "KQL transformation needs to be no longer than 15360 characters"
   }
