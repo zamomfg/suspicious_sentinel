@@ -52,7 +52,7 @@ locals {
       filter  = "| where CefName startswith 'firewall'"
       extends = <<-KQL
         | extend Chain = extract(@'\b(input|output|forward|prerouting|postrouting|srcnat|dstnat)\:', 1, EventMessage)
-        | extend NetworkRuleName = trim(@'\s+', extract(@'^(.*?)\b(?:input|output|forward|prerouting|postrouting|srcnat|dstnat)\:', 1, EventMessage))
+        | extend NetworkRuleName = trim(@'\s+', extract(@'^(.*?)\s+in:', 1, EventMessage))
         | extend DvcInboundInterface = extract(@'\bin:(.*?)\s+out:', 1, EventMessage)
         | extend DvcOutboundInterface = extract(@'\bout:([^,]*)', 1, EventMessage)
         | extend ConnectionState = extract(@'connection-state:(\S+)', 1, EventMessage)
