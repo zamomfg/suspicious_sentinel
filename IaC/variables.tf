@@ -24,13 +24,6 @@ variable "current_sp_id" {
   description = "The id of the service principal running the cd/ci pipeline"
 }
 
-variable "mikrotik_source_host" {
-  type        = string
-  default     = ""
-  sensitive   = true
-  description = "Router source host/IP used, together with the RouterOS topic pattern, to positively identify MikroTik syslog on the shared collector. Supplied via TF_VAR_mikrotik_source_host (GitHub Actions secret). When empty the transform matches on the topic pattern alone."
-}
-
 variable "maxmind_account_id" {
   type        = string
   sensitive   = true

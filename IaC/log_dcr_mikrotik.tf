@@ -9,16 +9,16 @@ locals {
   mikrotik_common_projection = "TimeGenerated,EventVendor,EventProduct,EventVersion,Hostname,DvcIpAddr,EventCategory,DeviceEventClassId,EventSeverity,EventMessage,Message"
 
   # RouterOS emits native topic-prefixed syslog (e.g. "firewall,info <body>"),
-  # not CEF. Positively identify it by the "topic,severity " message shape and
-  # (when set) the router source host/IP, so other syslog sources on the shared
-  # collector are filtered out.
+  # not CEF. The "topic,severity " message shape distinguishes MikroTik from any
+  # other source added to this collector later; the HostIP clause pins collection
+  # to the Arc syslog collector (10.42.0.1 is its local container address, not a
+  # device on the network).
   mikrotik_source = <<-KQL
     source
     | extend Message = SyslogMessage
+    | where HostIP == '10.42.0.1'
     | where Message matches regex @'^[a-z][a-z0-9-]*(?:,[a-z][a-z0-9-]*)+ '
   KQL
-
-  mikrotik_host_filter = var.mikrotik_source_host == "" ? "" : "| where HostName == '${var.mikrotik_source_host}' or HostIP == '${var.mikrotik_source_host}'"
 
   # Shared extends producing the common columns from native RouterOS syslog. The
   # comma-joined topic list is the first whitespace-delimited token (CefName, e.g.
@@ -130,7 +130,6 @@ module "dcr_mikrotik" {
       output_stream = "${local.custom_stream_prefix}${module.mikrotik_tables[k].name}"
       transform_kql = join("\n", compact([
         trimspace(local.mikrotik_source),
-        trimspace(local.mikrotik_host_filter),
         trimspace(local.mikrotik_common_extends),
         trimspace(c.filter),
         trimspace(c.extends),
