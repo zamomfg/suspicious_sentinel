@@ -58,11 +58,10 @@ module "detect_ssh_public_ip_login" {
 # so server replies (e.g. DNS from src port 53) aren't mistaken for scans.
 
 # Accepted inbound session whose source is a public (internet) address.
-# NRT (PT0S): per-event, single-table. The streaming engine can't compile the
-# ipv4_* functions or _GetWatchlist, so "public source" is expressed as a
-# non-RFC1918 / non-loopback / non-link-local string-prefix exclusion (same
-# technique as the SSH rule). No watchlist is needed - "public" is universal, so
-# nothing environment-specific is hardcoded.
+# NOTE: this cannot be NRT (PT0S). The Graph detectionRules API rejects it with
+# "Table ASimNetworkSessionLogs is not supported for Streaming" - NRT only runs on
+# native XDR streaming tables (Device*/Email*/Identity*/...), not Sentinel/ASIM
+# tables. So it stays scheduled at the fastest allowed cadence (PT1H).
 module "detect_inbound_internet_accepted" {
   source = "./modules/detection_rule"
 
@@ -70,21 +69,17 @@ module "detect_inbound_internet_accepted" {
   display_name       = "Accepted inbound traffic from the internet (MikroTik)"
   description        = "The firewall accepted a session sourced from a public (non-RFC1918) IP address. Expected only for intentionally published services / port-forwards; otherwise review the source and destination."
   severity           = "medium"
-  schedule_frequency = "PT0S" # continuous / NRT
+  schedule_frequency = "PT1H"
 
   query_text = <<-KQL
+    let InternalRanges = toscalar(_GetWatchlist('Vlans') | summarize make_set(Subnet));
     ASimNetworkSessionLogs
     | where DvcAction == "Allow"
     | where isnotempty(SrcIpAddr) and isnotempty(DstIpAddr)
-    | where not(SrcIpAddr startswith "10." or SrcIpAddr startswith "192.168."
-        or SrcIpAddr startswith "172.16." or SrcIpAddr startswith "172.17." or SrcIpAddr startswith "172.18." or SrcIpAddr startswith "172.19."
-        or SrcIpAddr startswith "172.20." or SrcIpAddr startswith "172.21." or SrcIpAddr startswith "172.22." or SrcIpAddr startswith "172.23."
-        or SrcIpAddr startswith "172.24." or SrcIpAddr startswith "172.25." or SrcIpAddr startswith "172.26." or SrcIpAddr startswith "172.27."
-        or SrcIpAddr startswith "172.28." or SrcIpAddr startswith "172.29." or SrcIpAddr startswith "172.30." or SrcIpAddr startswith "172.31."
-        or SrcIpAddr startswith "127." or SrcIpAddr startswith "169.254."
-        or SrcIpAddr == "::1" or SrcIpAddr startswith "fe80:" or SrcIpAddr startswith "fc" or SrcIpAddr startswith "fd")
-    | project Timestamp = TimeGenerated, SrcIpAddr, DstIpAddr, DstPortNumber, NetworkProtocol, DvcAction, NetworkRuleName, SrcGeoCountry, SrcGeoCity
-    | extend ReportId = strcat(SrcIpAddr, "|", DstIpAddr, "|", tostring(DstPortNumber), "|", tostring(Timestamp))
+    | where not(ipv4_is_private(SrcIpAddr))
+    | summarize SessionCount = count(), DstPorts = make_set(DstPortNumber, 50), DstHosts = make_set(DstIpAddr, 50), FirstSeen = min(TimeGenerated), LastSeen = max(TimeGenerated) by SrcIpAddr, SrcGeoCountry, SrcGeoCity
+    | extend Timestamp = LastSeen
+    | extend ReportId = tostring(hash(strcat(SrcIpAddr, tostring(LastSeen))))
   KQL
 
   alert_title         = "Accepted inbound traffic from the internet"
