@@ -88,8 +88,9 @@ module "detect_inbound_internet_accepted" {
   recommended_actions = "Confirm the destination service is intentionally published. If not, tighten the firewall rule and investigate the source IP."
   mitre_tactics       = [{ tactic = "InitialAccess", techniques = ["T1190"] }]
 
+  # Only SrcIpAddr survives the summarize; DstIpAddr is aggregated into DstHosts.
   entity_mappings = {
-    ips = [{ addressColumn = "SrcIpAddr" }, { addressColumn = "DstIpAddr" }]
+    ips = [{ addressColumn = "SrcIpAddr" }]
   }
 }
 
