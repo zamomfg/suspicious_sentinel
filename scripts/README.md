@@ -1,5 +1,27 @@
 # scripts
 
+## NRT compatibility tests (`tests/`)
+
+Static checks that every detection rule with `schedule_frequency = "NRT"` (or
+`PT0S`) can actually run as a
+[Continuous (NRT) custom detection](https://learn.microsoft.com/en-us/defender-xdr/custom-detection-rules#continuous-nrt-frequency).
+For each NRT rule in `IaC/*.tf` they assert that the query:
+
+- reads exactly one source table, and that table is on Microsoft's
+  [list of NRT-supported tables](https://learn.microsoft.com/en-us/defender-xdr/custom-detection-rules#tables-that-support-continuous-nrt-frequency);
+- uses no `join`, `union`, `lookup` or `externaldata`;
+- only uses tabular operators and scalar functions from the
+  [supported KQL features](https://learn.microsoft.com/en-us/azure/azure-monitor/essentials/data-collection-transformations-structure#supported-kql-features)
+  list (e.g. no `ipv4_*` functions).
+
+The allow-lists live in `nrt_compat.py`. They run in the Terraform Deploy
+workflow before `terraform plan`/`apply`, and locally with:
+
+```sh
+pip install "python-hcl2==4.3.5" "pytest==8.3.5"
+python -m pytest scripts/tests -v
+```
+
 ## `test_detection_rules.py`
 
 Tests Microsoft Defender XDR custom detection rules **before** they are
