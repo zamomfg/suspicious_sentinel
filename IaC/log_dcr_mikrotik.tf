@@ -13,7 +13,7 @@ locals {
   # no public geolocation anyway.
   mikrotik_private_ip_regex = "^(?:10\\.|127\\.|169\\.254\\.|192\\.168\\.|172\\.(?:1[6-9]|2[0-9]|3[01])\\.)"
 
-  # firewall,info block traffic between VLANs for: in:vlan-server out:vlan-server, connection-state:new src-mac DA:.., proto UDP, 192.168.5.8:53->192.168.5.21:1817, len 425
+  # RouterOS never logs the action, so home_net prefixes each line with A/D/R/L (accept/drop/reject/log).
   mikrotik_firewall_asim_kql = <<-KQL
     source
     | extend Message = SyslogMessage
@@ -22,7 +22,9 @@ locals {
     | where CefName startswith 'firewall'
     | extend EventMessage = extract(@'^\S+\s+(.*)$', 1, Message)
     | extend TopicSeverity = tostring(split(CefName, ',')[1])
-    | extend NetworkRuleName = extract(@'^(.*?)\s+in:', 1, EventMessage)
+    | extend RulePrefix = replace(@'^message repeated \d+ times: \[ ', '', extract(@'^(.*?)\s+in:', 1, EventMessage))
+    | extend ActionLetter = extract(@'^([ADRL]) ', 1, RulePrefix)
+    | extend NetworkRuleName = iif(isnotempty(ActionLetter), substring(RulePrefix, 2), RulePrefix)
     | extend DvcInboundInterface = extract(@'\bin:(.*?)\s+out:', 1, EventMessage)
     | extend DvcOutboundInterface = extract(@'\bout:([^,]*)', 1, EventMessage)
     | extend SrcMacAddr = extract(@'src-mac ([0-9a-fA-F:]{17})', 1, EventMessage)
@@ -32,7 +34,7 @@ locals {
     | extend DstIpAddr = extract(@'->(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})', 1, EventMessage)
     | extend DstPortNumber = extract(@'->\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}:(\d+)', 1, EventMessage)
     | extend NetworkBytes = extract(@'\blen (\d+)', 1, EventMessage)
-    | extend DvcAction = case(NetworkRuleName has 'drop' or NetworkRuleName has 'block' or NetworkRuleName has 'deny' or NetworkRuleName contains 'no access', 'Deny', NetworkRuleName has 'reject', 'Reset', NetworkRuleName has 'accept' or NetworkRuleName has 'allow' or NetworkRuleName has 'pass', 'Allow', '')
+    | extend DvcAction = case(ActionLetter == 'A', 'Allow', ActionLetter == 'D', 'Deny', ActionLetter == 'R', 'Reset', ActionLetter == 'L', '', NetworkRuleName has 'drop' or NetworkRuleName has 'block' or NetworkRuleName has 'deny' or NetworkRuleName contains 'no access', 'Deny', NetworkRuleName has 'reject', 'Reset', NetworkRuleName has 'accept' or NetworkRuleName has 'allow' or NetworkRuleName has 'pass', 'Allow', '')
     | extend SrcGeo = iif(isempty(SrcIpAddr) or isnotempty(extract(@'${local.mikrotik_private_ip_regex}', 0, SrcIpAddr)), parse_json('{}'), geo_location(SrcIpAddr))
     | extend DstGeo = iif(isempty(DstIpAddr) or isnotempty(extract(@'${local.mikrotik_private_ip_regex}', 0, DstIpAddr)), parse_json('{}'), geo_location(DstIpAddr))
     | project
