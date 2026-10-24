@@ -13,7 +13,7 @@ module "detect_ssh_public_ip_login" {
   status      = "experimental"
   author      = "zamomfg"
   date        = "2026-09-06"
-  modified    = ""
+  modified    = "2026-10-25"
   logsource   = { product = "linux", service = "sshd" }
   references = [
     "https://learn.microsoft.com/azure/azure-arc/servers/ssh-arc-overview",
@@ -40,14 +40,7 @@ module "detect_ssh_public_ip_login" {
     DeviceLogonEvents
     | where ActionType == "LogonSuccess"
     | where InitiatingProcessFileName in~ ("sshd", "sshd-session")
-    | where isnotempty(RemoteIP)
-    | where not(RemoteIP startswith "10." or RemoteIP startswith "192.168."
-        or RemoteIP startswith "172.16." or RemoteIP startswith "172.17." or RemoteIP startswith "172.18." or RemoteIP startswith "172.19."
-        or RemoteIP startswith "172.20." or RemoteIP startswith "172.21." or RemoteIP startswith "172.22." or RemoteIP startswith "172.23."
-        or RemoteIP startswith "172.24." or RemoteIP startswith "172.25." or RemoteIP startswith "172.26." or RemoteIP startswith "172.27."
-        or RemoteIP startswith "172.28." or RemoteIP startswith "172.29." or RemoteIP startswith "172.30." or RemoteIP startswith "172.31."
-        or RemoteIP startswith "127." or RemoteIP startswith "169.254."
-        or RemoteIP == "::1" or RemoteIP startswith "fe80:" or RemoteIP startswith "fc" or RemoteIP startswith "fd")
+    | where not(ipv4_is_private(RemoteIP))
     | project Timestamp, ReportId, DeviceId, DeviceName, AccountName, AccountDomain, AccountSid, RemoteIP, LogonType, InitiatingProcessFileName
   KQL
 }
