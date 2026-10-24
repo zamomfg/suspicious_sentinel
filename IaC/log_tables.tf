@@ -33,7 +33,7 @@ module "mikrotik_tables" {
   law_workspace_id = azurerm_log_analytics_workspace.law_sc.id
 
   retention_in_days    = 90
-  totalRetentionInDays = 90
+  totalRetentionInDays = 180
   columns              = concat(local.mikrotik_common_columns, local.mikrotik_category_extra_columns[each.key])
 }
 
