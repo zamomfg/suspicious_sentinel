@@ -37,7 +37,7 @@ locals {
     replace(var.query_text, "/(?m)^[ \\t]*//.*\\n?/", ""),
     "/[ \\t]*//.*/",
     "",
-  )) : "${local.metadata_header}\n\n${var.query_text}"
+  )) : "${local.metadata_header}\n//\n${var.query_text}"
 
   # The detectionRules API accepts a single tactic, so only the first one is sent;
   # the rest still appear as Sigma tags in the header.
