@@ -216,3 +216,4 @@ Start the logger service `sudo systemctl start logger`
 - ~~Fix a Go program for logging and create a linux service for it~~
 - Fix a pipeline for deployment
 - Move DCR to separate file, and try to make it less anoying to work with
+- Validate detection rule queries in `test-detection-rules.yaml` against the advanced hunting schema via Graph beta `GET /security/getHuntingSchema` (tables/columns exist)

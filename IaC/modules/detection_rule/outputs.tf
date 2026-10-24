@@ -8,9 +8,9 @@ output "status" {
   value       = try(msgraph_resource.detection_rule.output.status, null)
 }
 
-output "display_name" {
-  description = "Display name of the detection rule."
-  value       = var.display_name
+output "title" {
+  description = "Title (display name) of the detection rule."
+  value       = var.title
 }
 
 output "output" {

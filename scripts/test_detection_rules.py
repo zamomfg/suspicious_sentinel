@@ -69,7 +69,7 @@ COMMENT_MARKER = "<!-- defender-detection-test -->"
 def discover_rules(iac_dir):
     """Return a list of detection-rule module instances found under *iac_dir*.
 
-    Each entry is a dict with keys: file, name, display_name, query_text,
+    Each entry is a dict with keys: file, name, title, query_text,
     schedule_frequency. Only root-level *.tf files are scanned; the module's own
     implementation under modules/ is skipped.
     """
@@ -96,7 +96,7 @@ def discover_rules(iac_dir):
                 rules.append({
                     "file": os.path.basename(path),
                     "name": name,
-                    "display_name": body.get("display_name", name),
+                    "title": body.get("title", name),
                     "query_text": str(query),
                     "schedule_frequency": str(
                         body.get("schedule_frequency")
@@ -114,7 +114,7 @@ def rule_header(rule):
     schedule_label = SCHEDULE_LABEL.get(token, f"`{frequency}`")
     lookback = LOOKBACK_LABEL.get(token)
     return "\n".join([
-        f"### `{rule['name']}` — {rule['display_name']}",
+        f"### `{rule['name']}` — {rule['title']}",
         "",
         f"- **Source:** `IaC/{rule['file']}`",
         f"- **Schedule:** {schedule_label} (`frequency = \"{frequency}\"`)",
