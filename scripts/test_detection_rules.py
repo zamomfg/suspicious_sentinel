@@ -13,12 +13,15 @@ shipped tests cover hit counts over several intervals, the top entities behind
 the hits, and a trend line chart. Add one by dropping a module in
 `detection_tests/` and listing it in `detection_tests.TESTS`.
 
+With ``--base-ref`` only rules that are new or whose query changed since that
+git revision are tested.
+
 Environment:
   GRAPH_TOKEN   Bearer token for https://graph.microsoft.com (required).
   IAC_DIR       Directory to scan for *.tf rule definitions (default: IaC).
 
 Usage:
-  python test_detection_rules.py --output report.md
+  python test_detection_rules.py --output report.md [--base-ref origin/main]
 """
 
 from __future__ import annotations
@@ -26,7 +29,9 @@ from __future__ import annotations
 import argparse
 import glob
 import os
+import subprocess
 import sys
+import tempfile
 from datetime import datetime, timezone
 
 import hcl2
@@ -64,6 +69,7 @@ FREQUENCY_ALIASES = {
 }
 
 COMMENT_MARKER = "<!-- defender-detection-test -->"
+NO_CHANGES_MARKER = "<!-- defender-detection-test:no-changes -->"
 
 
 def discover_rules(iac_dir):
@@ -105,6 +111,29 @@ def discover_rules(iac_dir):
                     ),
                 })
     return rules
+
+
+def rules_at_revision(iac_dir, revision):
+    """Discover the detection rules as they were at git *revision*."""
+    listing = subprocess.run(
+        ["git", "ls-tree", "--name-only", revision, f"{iac_dir.rstrip('/')}/"],
+        check=True, capture_output=True, text=True,
+    ).stdout.split()
+    with tempfile.TemporaryDirectory() as base_dir:
+        for path in (p for p in listing if p.endswith(".tf")):
+            content = subprocess.run(
+                ["git", "show", f"{revision}:{path}"],
+                check=True, capture_output=True, text=True,
+            ).stdout
+            with open(os.path.join(base_dir, os.path.basename(path)), "w", encoding="utf-8") as fh:
+                fh.write(content)
+        return discover_rules(base_dir)
+
+
+def changed_rules(rules, base_rules):
+    """Rules that are new, or whose query_text differs from *base_rules*."""
+    base_queries = {rule["name"]: rule["query_text"].strip() for rule in base_rules}
+    return [rule for rule in rules if base_queries.get(rule["name"]) != rule["query_text"].strip()]
 
 
 def rule_header(rule):
@@ -149,7 +178,7 @@ def build_rule_section(rule, client):
     return "\n\n".join(parts) + "\n"
 
 
-def build_report(rules, token):
+def build_report(rules, token, only_changed=False):
     queried_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
     header = [
         COMMENT_MARKER,
@@ -161,9 +190,14 @@ def build_report(rules, token):
         f"_Queried at {queried_at}._",
         "",
     ]
+    if not rules and only_changed:
+        header += [NO_CHANGES_MARKER, "_No detection rule queries were added or changed._"]
+        return "\n".join(header) + "\n"
     if not rules:
         header.append("_No `detection_rule` modules found to test._")
         return "\n".join(header) + "\n"
+    if only_changed:
+        header += ["_Only rules whose query was added or changed are tested._", ""]
 
     client = HuntingClient(token)
     sections = [build_rule_section(rule, client) for rule in rules]
@@ -173,6 +207,8 @@ def build_report(rules, token):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--iac-dir", default=os.environ.get("IAC_DIR", "IaC"))
+    parser.add_argument("--base-ref",
+                        help="Only test rules added or whose query changed since this git revision.")
     parser.add_argument("--output", default="-",
                         help="File to write the Markdown report to (default: stdout).")
     args = parser.parse_args()
@@ -185,8 +221,12 @@ def main():
     rules = discover_rules(args.iac_dir)
     print(f"Discovered {len(rules)} detection rule(s) in {args.iac_dir}",
           file=sys.stderr)
+    if args.base_ref:
+        rules = changed_rules(rules, rules_at_revision(args.iac_dir, args.base_ref))
+        print(f"{len(rules)} rule(s) added or changed since {args.base_ref}",
+              file=sys.stderr)
 
-    report = build_report(rules, token)
+    report = build_report(rules, token, only_changed=bool(args.base_ref))
 
     if args.output == "-":
         sys.stdout.write(report)

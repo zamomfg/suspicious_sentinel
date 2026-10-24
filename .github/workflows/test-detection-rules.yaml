@@ -1,9 +1,9 @@
 name: "Test detection rules"
 
-# On pull requests that touch the Terraform detection rules, run each rule's
-# KQL against the Defender XDR advanced ("threat") hunting API and post a
-# comment summarising how many alerts each rule would create and how many hits
-# it produces over time. This is read-only — it never deploys anything.
+# On pull requests that touch the Terraform detection rules, run the KQL of each
+# rule that is new or whose query changed against the Defender XDR advanced
+# ("threat") hunting API and post a comment summarising how many alerts it
+# would create and how many hits it produces over time. Read-only.
 on:
   pull_request:
     paths:
@@ -25,6 +25,7 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           persist-credentials: false
+          fetch-depth: 0
 
       - name: "Az CLI login"
         uses: azure/login@7184910d9eb2b1c5e48f7073824a90609bb9b6d6 # v2
@@ -57,8 +58,9 @@ jobs:
         env:
           GRAPH_TOKEN: ${{ env.GRAPH_TOKEN }}
           IAC_DIR: IaC
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
-          python scripts/test_detection_rules.py --output report.md
+          python scripts/test_detection_rules.py --output report.md --base-ref "$BASE_SHA"
           cat report.md >> "$GITHUB_STEP_SUMMARY"
 
       - name: "Post results comment"
@@ -75,6 +77,9 @@ jobs:
               owner, repo, issue_number,
             });
             const existing = comments.find(c => c.body.includes(marker));
+            if (!existing && body.includes('<!-- defender-detection-test:no-changes -->')) {
+              return;
+            }
 
             if (existing) {
               await github.rest.issues.updateComment({

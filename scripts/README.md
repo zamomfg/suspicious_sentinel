@@ -14,8 +14,9 @@ For each NRT rule in `IaC/*.tf` they assert that the query:
   [supported KQL features](https://learn.microsoft.com/en-us/azure/azure-monitor/essentials/data-collection-transformations-structure#supported-kql-features)
   list (e.g. no `ipv4_*` functions).
 
-The allow-lists live in `nrt_compat.py`. They run in the Terraform Deploy
-workflow before `terraform plan`/`apply`, and locally with:
+The allow-lists live in `nrt_compat.py`. They run as the **NRT compatibility**
+check in the Terraform Deploy workflow, which the Terraform job waits on before
+`plan`/`apply`. Locally:
 
 ```sh
 pip install "python-hcl2==4.3.5" "pytest==8.3.5"
@@ -32,7 +33,8 @@ For every `detection_rule` module instance declared in `IaC/*.tf` it runs the
 rule's `query_text` against the Microsoft Graph endpoint
 [`POST /beta/security/runHuntingQuery`](https://learn.microsoft.com/en-us/graph/api/security-security-runhuntingquery?view=graph-rest-beta)
 and produces a Markdown report, stamped with the UTC time it was queried, with
-per rule:
+per rule (in pull requests, `--base-ref` limits this to rules that are new or
+whose query changed; no comment is posted when none did):
 
 - **Lookback window** — each rule's
   [lookback](https://learn.microsoft.com/en-us/defender-xdr/custom-detection-rules#lookback)

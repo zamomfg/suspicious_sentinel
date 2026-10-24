@@ -13,26 +13,12 @@ permissions:
   # pull-request: write
   contents: read
 
-env:
-  ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-  ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-  ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-  TF_VAR_current_sp_id: ${{ secrets.AZURE_CLIENT_ID }} # Used for getting the id of the current SP
-  TF_VAR_maxmind_account_id: ${{ secrets.MAXMIND_ACCOUNT_ID }} # MaxMind account ID (add as a repo/environment secret)
-  TF_VAR_maxmind_license_key: ${{ secrets.MAXMIND_LICENSE_KEY }} # MaxMind GeoLite2 license key (add as a repo/environment secret)
-  TF_VAR_security_insights_object_id: ${{ secrets.AZURE_SECURITY_INSIGHTS_OBJECT_ID }} # Object id of the Azure Security Insights SP, to grant playbook run permission
-  TF_VAR_tailscale_tailnet: ${{ secrets.TAILNET_ID }} # Tailscale tailnet to pull logs from (identifying; add as a repo/environment secret)
-  TF_VAR_tailscale_client_id: ${{ secrets.TAILSCALE_CLIENT_ID }} # Tailscale OAuth client id (client-credentials) for the codeless connector
-  TF_VAR_tailscale_client_secret: ${{ secrets.TAILSCALE_CLIENT_SECRET }} # Tailscale OAuth client secret (add as a repo/environment secret)
-  TF_LOG: ${{ vars.DEBUG_LEVEL }}
-
 jobs:
-  terraform:
-    name: "Terraform"
+  nrt-compat:
+    name: "NRT compatibility"
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./IaC
+    permissions:
+      contents: read
     steps:
       - name: "Checkout"
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -44,11 +30,36 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: "Test detection rules (NRT compatibility)"
-        working-directory: .
-        run: |
-          pip install "python-hcl2==4.3.5" "pytest==8.3.5"
-          python -m pytest scripts/tests -v -p no:cacheprovider
+      - name: "Install dependencies"
+        run: pip install "python-hcl2==4.3.5" "pytest==8.3.5"
+
+      - name: "Test NRT detection rules"
+        run: python -m pytest scripts/tests -v -p no:cacheprovider
+
+  terraform:
+    name: "Terraform"
+    needs: nrt-compat
+    runs-on: ubuntu-latest
+    env:
+      ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      TF_VAR_current_sp_id: ${{ secrets.AZURE_CLIENT_ID }} # Used for getting the id of the current SP
+      TF_VAR_maxmind_account_id: ${{ secrets.MAXMIND_ACCOUNT_ID }} # MaxMind account ID (add as a repo/environment secret)
+      TF_VAR_maxmind_license_key: ${{ secrets.MAXMIND_LICENSE_KEY }} # MaxMind GeoLite2 license key (add as a repo/environment secret)
+      TF_VAR_security_insights_object_id: ${{ secrets.AZURE_SECURITY_INSIGHTS_OBJECT_ID }} # Object id of the Azure Security Insights SP, to grant playbook run permission
+      TF_VAR_tailscale_tailnet: ${{ secrets.TAILNET_ID }} # Tailscale tailnet to pull logs from (identifying; add as a repo/environment secret)
+      TF_VAR_tailscale_client_id: ${{ secrets.TAILSCALE_CLIENT_ID }} # Tailscale OAuth client id (client-credentials) for the codeless connector
+      TF_VAR_tailscale_client_secret: ${{ secrets.TAILSCALE_CLIENT_SECRET }} # Tailscale OAuth client secret (add as a repo/environment secret)
+      TF_LOG: ${{ vars.DEBUG_LEVEL }}
+    defaults:
+      run:
+        working-directory: ./IaC
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
 
       - name: "Setup Terraform"
         uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3
