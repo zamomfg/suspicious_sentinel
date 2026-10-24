@@ -40,7 +40,8 @@ module "detect_ssh_public_ip_login" {
     DeviceLogonEvents
     | where ActionType == "LogonSuccess"
     | where InitiatingProcessFileName in~ ("sshd", "sshd-session")
-    | where not(ipv4_is_private(RemoteIP))
+    | where isnotempty(RemoteIP)
+    | where not(RemoteIP matches regex "^(10\\.|192\\.168\\.|172\\.(1[6-9]|2[0-9]|3[01])\\.|127\\.|169\\.254\\.|fe80:|f[cd]|::1$)")
     | project Timestamp, ReportId, DeviceId, DeviceName, AccountName, AccountDomain, AccountSid, RemoteIP, LogonType, InitiatingProcessFileName
   KQL
 }
