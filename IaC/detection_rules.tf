@@ -29,7 +29,7 @@ module "detect_ssh_public_ip_login" {
 
   recommended_actions = "Confirm the source IP and account are expected (e.g. Azure Cloud Shell / az ssh arc). If not, isolate the host and reset the account's credentials."
 
-  schedule_frequency = "NTR"
+  schedule_frequency = "NRT"
   entity_mappings = {
     hosts    = [{ deviceIdColumn = "DeviceId", nameColumn = "DeviceName" }]
     accounts = [{ nameColumn = "AccountName", ntDomainColumn = "AccountDomain", sidColumn = "AccountSid" }]
@@ -40,7 +40,14 @@ module "detect_ssh_public_ip_login" {
     DeviceLogonEvents
     | where ActionType == "LogonSuccess"
     | where InitiatingProcessFileName in~ ("sshd", "sshd-session")
-    | where not(ipv4_is_private(RemoteIP))
+    | where isnotempty(RemoteIP)
+    | where not(RemoteIP startswith "10." or RemoteIP startswith "192.168."
+        or RemoteIP startswith "172.16." or RemoteIP startswith "172.17." or RemoteIP startswith "172.18." or RemoteIP startswith "172.19."
+        or RemoteIP startswith "172.20." or RemoteIP startswith "172.21." or RemoteIP startswith "172.22." or RemoteIP startswith "172.23."
+        or RemoteIP startswith "172.24." or RemoteIP startswith "172.25." or RemoteIP startswith "172.26." or RemoteIP startswith "172.27."
+        or RemoteIP startswith "172.28." or RemoteIP startswith "172.29." or RemoteIP startswith "172.30." or RemoteIP startswith "172.31."
+        or RemoteIP startswith "127." or RemoteIP startswith "169.254."
+        or RemoteIP == "::1" or RemoteIP startswith "fe80:" or RemoteIP startswith "fc" or RemoteIP startswith "fd")
     | project Timestamp, ReportId, DeviceId, DeviceName, AccountName, AccountDomain, AccountSid, RemoteIP, LogonType, InitiatingProcessFileName
   KQL
 }
@@ -157,7 +164,7 @@ module "detect_internal_scan_horizontal" {
     );
     let InternalRanges = toscalar(_GetWatchlist('Vlans') | summarize make_set(Subnet));
     ASimNetworkSessionLogs
-    | where ipv4_is_private(SrcAppId) and ipv4_is_private(DstIpAddr)
+    | where ipv4_is_private(SrcIpAddr) and ipv4_is_private(DstIpAddr)
     | summarize DistinctHosts = dcount(DstIpAddr), TargetHosts = make_set(DstIpAddr, 100), Attempts = count(), FirstSeen = min(TimeGenerated), LastSeen = max(TimeGenerated) by SrcIpAddr, DstPortNumber, NetworkProtocol
     | where DistinctHosts >= NrHostsThreshold
     | extend Timestamp = LastSeen
@@ -202,7 +209,7 @@ module "detect_internal_scan_vertical" {
     );
     let InternalRanges = toscalar(_GetWatchlist('Vlans') | summarize make_set(Subnet));
     ASimNetworkSessionLogs
-    | where ipv4_is_private(SrcAppId) and ipv4_is_private(DstIpAddr)
+    | where ipv4_is_private(SrcIpAddr) and ipv4_is_private(DstIpAddr)
     | sort by DstPortNumber desc
     | summarize DistinctPorts = dcount(DstPortNumber), TargetPorts = make_set(DstPortNumber, 1000), Attempts = count(), FirstSeen = min(TimeGenerated), LastSeen = max(TimeGenerated) by SrcIpAddr, SrcMacAddr, DstIpAddr, DstMacAddr, NetworkProtocol
     | where DistinctPorts >= NrPortsThreshold

@@ -40,13 +40,13 @@ variable "strip_comments" {
 }
 
 variable "schedule_frequency" {
-  description = "How often the rule runs, as an ISO 8601 duration: PT1H, PT3H, PT12H, PT24H, or NTR (near-real-time)"
+  description = "How often the rule runs, as an ISO 8601 duration: PT1H, PT3H, PT12H, PT24H, or NRT (near-real-time). NRT queries cannot use ipv4_* functions."
   type        = string
   default     = "PT24H"
 
   validation {
-    condition     = contains(["NTR", "PT1H", "PT3H", "PT12H", "PT24H"], var.schedule_frequency)
-    error_message = "schedule_frequency must be one of: NTR, PT1H, PT3H, PT12H, PT24H."
+    condition     = contains(["NRT", "PT1H", "PT3H", "PT12H", "PT24H"], var.schedule_frequency)
+    error_message = "schedule_frequency must be one of: NRT, PT1H, PT3H, PT12H, PT24H."
   }
 }
 

@@ -70,7 +70,7 @@ locals {
     var.detection_action_extra,
   )
 
-  schedule_frequency = var.schedule_frequency == "NTR" ? "PT05" : var.schedule_frequency
+  schedule_frequency = var.schedule_frequency == "NRT" ? "PT0S" : var.schedule_frequency
 
   body = {
     id              = var.rule_id

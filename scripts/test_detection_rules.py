@@ -60,7 +60,7 @@ FREQUENCY_ALIASES = {
     "PT12H": "12H", "12H": "12H",
     "PT3H": "3H", "3H": "3H",
     "PT1H": "1H", "1H": "1H",
-    "PT0S": "0", "0": "0",
+    "PT0S": "0", "NRT": "0", "0": "0",
 }
 
 COMMENT_MARKER = "<!-- defender-detection-test -->"
