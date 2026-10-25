@@ -49,12 +49,12 @@ registration in Entra:
 ```mermaid
 flowchart LR
     subgraph sources["Data sources"]
-        mikrotik["MikroTik RouterOS (CEF over TCP)"]
+        mikrotik["MikroTik RouterOS"]
         maxmind["MaxMind GeoLite2-ASN feed"]
     end
 
     subgraph collect["Collection"]
-        fluentbit["Fluent Bit (home_lab k3s)"]
+        fluentbit["Fluent Bit"]
         dcr@{ icon: "logos:microsoft-azure", form: "square", label: "DCE + DCR dcr-fluentbit-*-001", pos: "b" }
     end
 
@@ -142,33 +142,17 @@ trust the REST API:
 - Operation groups: <https://learn.microsoft.com/rest/api/securityinsights/operation-groups>
 - Data connectors (RestApiPoller): <https://learn.microsoft.com/rest/api/securityinsights/data-connectors/create-or-update>
 
-### Log collection (MikroTik → Fluent Bit → Sentinel)
+### Log collection
 
-The MikroTik router (configured in the `home_net` repo) sends its logs as **CEF
-over TCP** to **Fluent Bit** in the `home_lab` cluster (`apps/fluent-bit`,
-`kube-01:514`). Fluent Bit buffers every event on disk and sends it with the
-**Logs Ingestion API** to `dce-fluentbit-*-001` / `dcr-fluentbit-*-001`
-(`IaC/log_dce.tf`, `IaC/log_dcr_fluent_bit.tf`).
-
-- `dcr-fluentbit-*-001` is generic: each log source gets its own input stream
-  (`Custom-<Name>`, = Fluent Bit's output `table_name`) and data flows. MikroTik
-  uses `Custom-MikroTikSyslog` (`TimeGenerated`, `HostName`, `HostIP`, `SyslogMessage`).
-- The MikroTik transforms (`IaC/log_dcr_mikrotik.tf`) accept both RouterOS
-  formats — CEF is rewritten to `<topics> <message>` first — and write to
-  `ASimNetworkSessionLogs`, `ASimDhcpEventLogs`, `MikroTikSystem_CL` and
-  `MikroTikDns_CL`.
-- RouterOS never logs a firewall rule's action, so `home_net` prefixes each rule's
-  log prefix with a letter (`A`ccept, `D`rop, `R`eject, `L`og) that the DCR maps to
-  `DvcAction`.
-- Fluent Bit authenticates as the `fluent-bit-home-lab` service principal
-  (created in `azure-init`, **Monitoring Metrics Publisher** on the DCR); its
-  credentials are a sops-encrypted Secret in `home_lab`.
+Logs are forwarded with Fluent Bit to a Logs Ingestion API DCR
+(`IaC/log_dcr_fluent_bit.tf`). MikroTik logs are parsed into the ASIM and
+`MikroTik*_CL` tables (`IaC/log_dcr_mikrotik.tf`).
 
 ### TODO
 
 - ~~Change to a Sentinel workspace~~
 - Create some KQL queries
-- ~~Fix a Go program for logging and create a linux service for it~~ (replaced by Fluent Bit in home_lab)
+- ~~Fix a Go program for logging and create a linux service for it~~
 - Fix a pipeline for deployment
 - Move DCR to separate file, and try to make it less anoying to work with
 - Validate detection rule queries in `test-detection-rules.yaml` against the advanced hunting schema via Graph beta `GET /security/getHuntingSchema` (tables/columns exist)

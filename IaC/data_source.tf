@@ -9,3 +9,11 @@ data "azurerm_resource_group" "rg_log" {
 #   name = "dcr-workspace-sc-001"
 #   resource_group_name = "rg-log-sc-001"
 # }
+
+removed {
+  from = azurerm_arc_machine_extension.home_lab_ama
+
+  lifecycle {
+    destroy = false
+  }
+}
