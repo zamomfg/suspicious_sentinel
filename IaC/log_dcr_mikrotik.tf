@@ -216,8 +216,6 @@ module "dcr_mikrotik" {
 
   law_destinations_workspace_id = [azurerm_log_analytics_workspace.law_sc.id]
 
-  vm_association_ids = [data.azurerm_arc_machine.home_lab_ama.id]
-
   data_sources_syslog = [
     {
       name           = "source_mikrotik_syslog"
