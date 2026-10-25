@@ -14,9 +14,10 @@ For each NRT rule in `IaC/*.tf` they assert that the query:
   [supported KQL features](https://learn.microsoft.com/en-us/azure/azure-monitor/essentials/data-collection-transformations-structure#supported-kql-features)
   list (e.g. no `ipv4_*` functions).
 
-The allow-lists live in `nrt_compat.py`. They run as the **NRT compatibility**
-check in the Terraform Deploy workflow, which the Terraform job waits on before
-`plan`/`apply`. Locally:
+The allow-lists live in `nrt_compat.py`. They run as the standalone **NRT
+compatibility** check
+([`.github/workflows/nrt-compat.yaml`](../.github/workflows/nrt-compat.yaml)) on
+pull requests that touch `IaC/**.tf` or `scripts/**`. Locally:
 
 ```sh
 pip install "python-hcl2==4.3.5" "pytest==8.3.5"
