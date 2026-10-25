@@ -5,3 +5,10 @@ resource "azurerm_monitor_data_collection_endpoint" "tailscale" {
   location            = local.primary_location
   tags                = var.tags
 }
+
+resource "azurerm_monitor_data_collection_endpoint" "fluent_bit" {
+  name                = "dce-fluentbit-${local.primary_location_short}-001"
+  resource_group_name = data.azurerm_resource_group.rg_log.name
+  location            = local.primary_location
+  tags                = var.tags
+}

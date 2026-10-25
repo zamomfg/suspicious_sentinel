@@ -1,11 +1,15 @@
-# MikroTik RouterOS native syslog -> Sentinel.
-# RouterOS emits native topic-prefixed syslog (e.g. "firewall,info <body>"), not
-# CEF. Firewall and DHCP are normalized into the ASIM tables
+# MikroTik RouterOS syslog -> Sentinel.
+# RouterOS sends either its default format ("firewall,info <body>") or CEF
+# ("CEF:0|MikroTik|<model>|<ver>|<id>|firewall,info|<sev>|dvchost=.. dvc=.. msg=<body>");
+# mikrotik_message rewrites CEF to the default shape so all parsing below is shared.
+# Firewall and DHCP are normalized into the ASIM tables
 # (ASimNetworkSessionLogs / ASimDhcpEventLogs); System and DNS stay in tailored
 # custom tables. Every flow starts from the same source identification: the
 # "topic,severity " message shape, which also keeps out any other source added
 # to this collector later.
 locals {
+  mikrotik_message = "| extend Message = iif(SyslogMessage contains 'CEF:0|MikroTik|', strcat(extract(@'CEF:\\d+(?:\\|[^|]*){4}\\|([^|]*)\\|', 1, SyslogMessage), ' ', replace(@'\\\\=', '=', extract(@'\\bmsg=(.*?)\\s*$', 1, SyslogMessage))), SyslogMessage)"
+
   mikrotik_source_where = "| where Message matches regex @'^[a-z][a-z0-9-]*(?:,[a-z][a-z0-9-]*)+ '"
 
   # Regex matching an RFC1918 / loopback / link-local IPv4 prefix. Used to skip
@@ -16,7 +20,7 @@ locals {
   # RouterOS never logs the action, so home_net prefixes each line with A/D/R/L (accept/drop/reject/log).
   mikrotik_firewall_asim_kql = <<-KQL
     source
-    | extend Message = SyslogMessage
+    ${local.mikrotik_message}
     ${local.mikrotik_source_where}
     | extend CefName = extract(@'^(\S+)\s', 1, Message)
     | where CefName startswith 'firewall'
@@ -77,7 +81,7 @@ locals {
   # dhcp,info defconf assigned 192.168.88.37 for B0:E4:5C:27:EF:F2 Samsung
   mikrotik_dhcp_asim_kql = <<-KQL
     source
-    | extend Message = SyslogMessage
+    ${local.mikrotik_message}
     ${local.mikrotik_source_where}
     | extend CefName = extract(@'^(\S+)\s', 1, Message)
     | where CefName startswith 'dhcp'
@@ -120,7 +124,7 @@ locals {
 
   mikrotik_source = <<-KQL
     source
-    | extend Message = SyslogMessage
+    ${local.mikrotik_message}
     ${local.mikrotik_source_where}
   KQL
 
@@ -165,6 +169,43 @@ locals {
   }
 }
 
+locals {
+  # Output streams + transforms shared by the AMA DCR (Microsoft-Syslog) and the
+  # Fluent Bit DCR (Custom-MikroTikSyslog, log_dcr_fluent_bit.tf); both input
+  # streams carry the TimeGenerated/HostName/HostIP/SyslogMessage columns read here.
+  mikrotik_flows = concat(
+    [
+      {
+        output_stream = "Microsoft-ASimNetworkSessionLogs"
+        transform_kql = trimspace(local.mikrotik_firewall_asim_kql)
+      },
+      {
+        output_stream = "Microsoft-ASimDhcpEventLogs"
+        transform_kql = trimspace(local.mikrotik_dhcp_asim_kql)
+      },
+    ],
+    [
+      for k, c in local.mikrotik_categories : {
+        output_stream = "${local.custom_stream_prefix}${module.mikrotik_tables[k].name}"
+        transform_kql = join("\n", compact([
+          trimspace(local.mikrotik_source),
+          trimspace(local.mikrotik_common_extends),
+          trimspace(c.filter),
+          trimspace(c.extends),
+          "| project ${local.mikrotik_common_projection}${length(local.mikrotik_category_columns[k]) > 0 ? ",${join(",", local.mikrotik_category_columns[k])}" : ""}",
+        ]))
+      }
+    ]
+  )
+
+  mikrotik_table_stream_declarations = [
+    for k, c in local.mikrotik_categories : {
+      stream_name   = "${local.custom_stream_prefix}${module.mikrotik_tables[k].name}"
+      column_schema = module.mikrotik_tables[k].column_schema
+    }
+  ]
+}
+
 module "dcr_mikrotik" {
   source = "./modules/dcr"
 
@@ -186,43 +227,14 @@ module "dcr_mikrotik" {
     }
   ]
 
-  data_flows = concat(
-    [
-      {
-        streams       = ["Microsoft-Syslog"]
-        destinations  = [azurerm_log_analytics_workspace.law_sc.id]
-        output_stream = "Microsoft-ASimNetworkSessionLogs"
-        transform_kql = trimspace(local.mikrotik_firewall_asim_kql)
-      },
-      {
-        streams       = ["Microsoft-Syslog"]
-        destinations  = [azurerm_log_analytics_workspace.law_sc.id]
-        output_stream = "Microsoft-ASimDhcpEventLogs"
-        transform_kql = trimspace(local.mikrotik_dhcp_asim_kql)
-      },
-    ],
-    [
-      for k, c in local.mikrotik_categories : {
-        streams       = ["Microsoft-Syslog"]
-        destinations  = [azurerm_log_analytics_workspace.law_sc.id]
-        output_stream = "${local.custom_stream_prefix}${module.mikrotik_tables[k].name}"
-        transform_kql = join("\n", compact([
-          trimspace(local.mikrotik_source),
-          trimspace(local.mikrotik_common_extends),
-          trimspace(c.filter),
-          trimspace(c.extends),
-          "| project ${local.mikrotik_common_projection}${length(local.mikrotik_category_columns[k]) > 0 ? ",${join(",", local.mikrotik_category_columns[k])}" : ""}",
-        ]))
-      }
-    ]
-  )
-
-  stream_declarations = [
-    for k, c in local.mikrotik_categories : {
-      stream_name   = "${local.custom_stream_prefix}${module.mikrotik_tables[k].name}"
-      column_schema = module.mikrotik_tables[k].column_schema
-    }
+  data_flows = [
+    for f in local.mikrotik_flows : merge(f, {
+      streams      = ["Microsoft-Syslog"]
+      destinations = [azurerm_log_analytics_workspace.law_sc.id]
+    })
   ]
+
+  stream_declarations = local.mikrotik_table_stream_declarations
 
   logging_workspace_id = azurerm_log_analytics_workspace.law_sc.id
 }
