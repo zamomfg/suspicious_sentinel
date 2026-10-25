@@ -170,9 +170,8 @@ locals {
 }
 
 locals {
-  # Output streams + transforms shared by the AMA DCR (Microsoft-Syslog) and the
-  # Fluent Bit DCR (Custom-MikroTikSyslog, log_dcr_fluent_bit.tf); both input
-  # streams carry the TimeGenerated/HostName/HostIP/SyslogMessage columns read here.
+  # Output streams + transforms used by the Fluent Bit DCR (log_dcr_fluent_bit.tf)
+  # for its Custom-MikroTikSyslog stream.
   mikrotik_flows = concat(
     [
       {
@@ -204,35 +203,4 @@ locals {
       column_schema = module.mikrotik_tables[k].column_schema
     }
   ]
-}
-
-module "dcr_mikrotik" {
-  source = "./modules/dcr"
-
-  name                = "dcr-mikrotik-${local.primary_location_short}-001"
-  resource_group_name = data.azurerm_resource_group.rg_log.name
-  location            = local.primary_location
-  tags                = var.tags
-
-  law_destinations_workspace_id = [azurerm_log_analytics_workspace.law_sc.id]
-
-  data_sources_syslog = [
-    {
-      name           = "source_mikrotik_syslog"
-      facility_names = ["*"]
-      log_levels     = ["*"]
-      streams        = ["Microsoft-Syslog"]
-    }
-  ]
-
-  data_flows = [
-    for f in local.mikrotik_flows : merge(f, {
-      streams      = ["Microsoft-Syslog"]
-      destinations = [azurerm_log_analytics_workspace.law_sc.id]
-    })
-  ]
-
-  stream_declarations = local.mikrotik_table_stream_declarations
-
-  logging_workspace_id = azurerm_log_analytics_workspace.law_sc.id
 }
