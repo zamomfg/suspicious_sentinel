@@ -24,3 +24,14 @@ module "vlans" {
   file_path                  = "${local.watchlist_data_base_dir}vlans.csv"
   encrypted                  = true
 }
+
+module "break_glass_accounts" {
+  source = "./modules/sentinel_watchlist"
+
+  name                       = "BreakGlassAccounts"
+  display_name               = "Break glass accounts"
+  item_search_key            = "UserPrincipalName"
+  log_analytics_workspace_id = azurerm_log_analytics_workspace.law_sc.id
+  file_path                  = "${local.watchlist_data_base_dir}break_glass_accounts.csv"
+  encrypted                  = true
+}
