@@ -20,6 +20,11 @@ resource "msgraph_resource" "urbac_sentinel_contributor" {
       }
     ]
   }
+
+  # Updating a role with Sentinel permissions needs URBAC manage rights on the Workspaces data collection.
+  lifecycle {
+    ignore_changes = [body]
+  }
 }
 
 import {
@@ -76,6 +81,6 @@ resource "msgraph_resource" "urbac_organization_management_assignment" {
     displayName      = "Organization Management - sg-urbac-organization-management"
     roleDefinitionId = msgraph_resource.urbac_organization_management.id
     principalIds     = [msgraph_resource.group_urbac_organization_management.id]
-    appScopeIds      = ["/"]
+    appScopeIds      = ["Mdo"]
   }
 }
