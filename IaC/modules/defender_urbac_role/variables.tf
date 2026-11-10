@@ -18,7 +18,8 @@ variable "assignments" {
     Role assignments. Each assignment grants the role to principal_ids over:
       data_sources     - Defender workloads: Mde, Mdo, Mda, Mdc, SecureScoreExternal, Sai,
                          or "AllIncludingFutureDataSources".
-      data_collections - Sentinel workspace ids the assignment can query,
+      data_collections - Log Analytics workspace ids (the workspace_id / customer id
+                         GUID, not the ARM resource id) the assignment can query,
                          or "AllExistingAndFutureWorkspaces".
   EOT
   type = list(object({
