@@ -23,14 +23,16 @@ locals {
     queryTimeFormat        = "yyyy-MM-ddTHH:mm:ssZ"
     startTimeAttributeName = "start"
     endTimeAttributeName   = "end"
+    queryParameters        = {}
   }
 
   tailscale_connector_ui_config = {
-    id                    = "TailscaleCCPDefinition"
-    title                 = "Tailscale Logging"
-    publisher             = "Tailscale"
-    descriptionMarkdown   = "The [Tailscale](https://tailscale.com/) Logging data connector ingests configuration audit logs and network flow logs from the [Tailscale API](https://tailscale.com/api) into Microsoft Sentinel, authenticating with an OAuth 2.0 client-credentials client."
-    graphQueriesTableName = "TailscaleAuditLogs_CL"
+    id                               = "TailscaleCCPDefinition"
+    title                            = "Tailscale Logging"
+    publisher                        = "Tailscale"
+    descriptionMarkdown              = "The [Tailscale](https://tailscale.com/) Logging data connector ingests configuration audit logs and network flow logs from the [Tailscale API](https://tailscale.com/api) into Microsoft Sentinel, authenticating with an OAuth 2.0 client-credentials client."
+    graphQueriesTableName            = "TailscaleAuditLogs_CL"
+    isConnectivityCriteriasMatchSome = false
 
     graphQueries = [
       {
@@ -148,6 +150,7 @@ module "tailscale_connector" {
     TailscaleAuditDataConnector = {
       properties = {
         connectorDefinitionName = "TailscaleCCPDefinition"
+        isActive                = true
         dataType                = module.tailscale_audit_table.name
         dcrConfig = {
           dataCollectionEndpoint        = azurerm_monitor_data_collection_endpoint.tailscale.logs_ingestion_endpoint
@@ -168,6 +171,7 @@ module "tailscale_connector" {
     TailscaleNetworkDataConnector = {
       properties = {
         connectorDefinitionName = "TailscaleCCPDefinition"
+        isActive                = true
         dataType                = module.tailscale_network_table.name
         dcrConfig = {
           dataCollectionEndpoint        = azurerm_monitor_data_collection_endpoint.tailscale.logs_ingestion_endpoint

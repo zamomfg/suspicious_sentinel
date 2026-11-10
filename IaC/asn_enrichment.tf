@@ -208,17 +208,18 @@ resource "azurerm_windows_function_app" "asn" {
   }
 
   site_config {
+    application_insights_connection_string = azurerm_application_insights.asn.connection_string
+
     application_stack {
       powershell_core_version = "7.4"
     }
   }
 
   app_settings = {
-    "APPLICATIONINSIGHTS_CONNECTION_STRING" = azurerm_application_insights.asn.connection_string
-    "WEBSITE_RUN_FROM_PACKAGE"              = local.asn_pkg_url
-    "MAXMIND_ACCOUNT_ID"                    = sensitive("@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.maxmind_account.versionless_id})")
-    "MAXMIND_LICENSE_KEY"                   = sensitive("@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.maxmind.versionless_id})")
-    "AsnSchedule"                           = var.asn_refresh_cron
+    "WEBSITE_RUN_FROM_PACKAGE" = local.asn_pkg_url
+    "MAXMIND_ACCOUNT_ID"       = sensitive("@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.maxmind_account.versionless_id})")
+    "MAXMIND_LICENSE_KEY"      = sensitive("@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.maxmind.versionless_id})")
+    "AsnSchedule"              = var.asn_refresh_cron
   }
 }
 
