@@ -88,21 +88,16 @@ moved {
 }
 
 moved {
-  from = msgraph_resource.urbac_organization_management_assignment
-  to   = module.urbac_organization_management.msgraph_resource.assignment["Organization Management - sg-urbac-organization-management"]
-}
-
-moved {
   from = msgraph_resource.urbac_view_only_organization_management
   to   = module.urbac_view_only_organization_management.msgraph_resource.role
 }
 
-moved {
-  from = msgraph_resource.urbac_defender_operator
-  to   = module.urbac_defender_operator.msgraph_resource.role
+import {
+  to = module.urbac_defender_operator.msgraph_resource.role
+  id = "/roleManagement/defender/roleDefinitions/e03885b9-f04c-4828-8077-c90da939bcd7?api-version=beta"
 }
 
-moved {
-  from = msgraph_resource.urbac_defender_admin
-  to   = module.urbac_defender_admin.msgraph_resource.role
+import {
+  to = module.urbac_defender_admin.msgraph_resource.role
+  id = "/roleManagement/defender/roleDefinitions/0c473ea4-797a-4da9-bc16-dd3c3c7d91ac?api-version=beta"
 }
