@@ -77,10 +77,11 @@ resource "msgraph_resource" "urbac_organization_management_assignment" {
   url         = "roleManagement/defender/roleAssignments"
   api_version = "beta"
   body = {
-    "@odata.type"    = "#microsoft.graph.unifiedRoleAssignmentMultiple"
-    displayName      = "Organization Management - sg-urbac-organization-management"
-    roleDefinitionId = msgraph_resource.urbac_organization_management.id
-    principalIds     = [msgraph_resource.group_urbac_organization_management.id]
-    appScopeIds      = ["Mdo"]
+    "@odata.type"     = "#microsoft.graph.unifiedRoleAssignmentMultiple"
+    displayName       = "Organization Management - sg-urbac-organization-management"
+    roleDefinitionId  = msgraph_resource.urbac_organization_management.id
+    principalIds      = [msgraph_resource.group_urbac_organization_management.id]
+    directoryScopeIds = ["/"]
+    appScopeIds       = ["Mdo"]
   }
 }
