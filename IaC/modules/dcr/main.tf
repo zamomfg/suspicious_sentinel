@@ -24,14 +24,17 @@ resource "azurerm_monitor_data_collection_rule" "dcr" {
     }
   }
 
-  data_sources {
-    dynamic "syslog" {
-      for_each = var.data_sources_syslog
-      content {
-        name           = syslog.value.name
-        streams        = syslog.value.streams
-        facility_names = syslog.value.facility_names
-        log_levels     = syslog.value.log_levels
+  dynamic "data_sources" {
+    for_each = length(var.data_sources_syslog) > 0 ? [1] : []
+    content {
+      dynamic "syslog" {
+        for_each = var.data_sources_syslog
+        content {
+          name           = syslog.value.name
+          streams        = syslog.value.streams
+          facility_names = syslog.value.facility_names
+          log_levels     = syslog.value.log_levels
+        }
       }
     }
   }
@@ -69,8 +72,7 @@ resource "azurerm_monitor_diagnostic_setting" "dcr_diagnostics" {
   name               = "${regex("[^/]+$", var.logging_workspace_id)}_all_logs"
   target_resource_id = azurerm_monitor_data_collection_rule.dcr.id
 
-  log_analytics_workspace_id     = var.logging_workspace_id
-  log_analytics_destination_type = "Dedicated"
+  log_analytics_workspace_id = var.logging_workspace_id
 
   enabled_log {
     category_group = "allLogs"
