@@ -20,6 +20,11 @@ resource "msgraph_resource" "urbac_sentinel_contributor" {
       }
     ]
   }
+
+  # Updating a role with Sentinel permissions needs URBAC manage rights on the Workspaces data collection.
+  lifecycle {
+    ignore_changes = [body]
+  }
 }
 
 import {
