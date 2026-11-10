@@ -1,3 +1,8 @@
+import {
+  to = msgraph_resource.urbac_sentinel_contributor
+  id = "/roleManagement/defender/roleDefinitions/3c6daca9-d903-4153-9397-deaa31211d91?api-version=beta"
+}
+
 resource "msgraph_resource" "urbac_sentinel_contributor" {
   url         = "roleManagement/defender/roleDefinitions"
   api_version = "beta"
@@ -17,6 +22,11 @@ resource "msgraph_resource" "urbac_sentinel_contributor" {
   }
 }
 
+import {
+  to = msgraph_resource.urbac_organization_management
+  id = "/roleManagement/defender/roleDefinitions/e9fa37ec-efb7-49fc-b37c-47a95ef1471f?api-version=beta"
+}
+
 resource "msgraph_resource" "urbac_organization_management" {
   url         = "roleManagement/defender/roleDefinitions"
   api_version = "beta"
@@ -34,6 +44,11 @@ resource "msgraph_resource" "urbac_organization_management" {
       }
     ]
   }
+}
+
+import {
+  to = msgraph_resource.urbac_view_only_organization_management
+  id = "/roleManagement/defender/roleDefinitions/56af8797-1a07-4bcd-81d2-96acd84603b8?api-version=beta"
 }
 
 resource "msgraph_resource" "urbac_view_only_organization_management" {
