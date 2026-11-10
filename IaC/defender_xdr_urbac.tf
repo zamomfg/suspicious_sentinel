@@ -2,6 +2,7 @@ module "urbac_sentinel_contributor" {
   source = "./modules/defender_urbac_role"
 
   display_name = "URBAC Sentinel Contributor"
+  description  = "Full access to manage Microsoft Sentinel"
   permissions = [
     "microsoft.xdr/secops/securitydata/basics/read",
     "microsoft.xdr/secops/securitydata/alerts/manage",
@@ -14,6 +15,7 @@ module "urbac_organization_management" {
   source = "./modules/defender_urbac_role"
 
   display_name = "Organization Management"
+  description  = "This role was imported based on mapping for Exchange Online permissions. Members of this management role group have permissions to manage Exchange objects and their properties in the Exchange organization. Members can also delegate role groups and management roles in the organization. This role group shouldn't be deleted."
   permissions = [
     "microsoft.xdr/configuration/security/core/manage",
     "microsoft.xdr/configuration/security/detectiontuning/manage",
@@ -34,6 +36,7 @@ module "urbac_view_only_organization_management" {
   source = "./modules/defender_urbac_role"
 
   display_name = "View-Only Organization Management"
+  description  = "This role was imported based on mapping for Exchange Online permissions. Members of this management role group can view recipient and configuration objects and their properties in the Exchange organization."
   permissions = [
     "microsoft.xdr/configuration/security/core/read",
     "microsoft.xdr/configuration/system/read",
@@ -68,7 +71,7 @@ module "urbac_defender_operator" {
     {
       display_name     = "Defender Operator - sg-urbac-defender-operator"
       principal_ids    = [msgraph_resource.group_urbac_defender_operator.id]
-      data_sources     = ["AllIncludingFutureDataSources"]
+      data_sources     = ["AllExistingAndFutureDataSources"]
       data_collections = ["AllExistingAndFutureWorkspaces"]
     },
   ]
@@ -89,7 +92,7 @@ module "urbac_defender_admin" {
     {
       display_name     = "Defender Admin - sg-urbac-defender-admin"
       principal_ids    = [msgraph_resource.group_urbac_defender_admin.id]
-      data_sources     = ["AllIncludingFutureDataSources"]
+      data_sources     = ["AllExistingAndFutureDataSources"]
       data_collections = ["AllExistingAndFutureWorkspaces"]
     },
   ]

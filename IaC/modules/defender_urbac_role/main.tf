@@ -2,7 +2,7 @@ locals {
   assignments = {
     for a in var.assignments : a.display_name => merge(a, {
       app_scope_ids = concat(
-        [for s in a.data_sources : s == "AllIncludingFutureDataSources" ? "/" : s],
+        [for s in a.data_sources : s == "AllExistingAndFutureDataSources" ? "/" : s],
         [for c in a.data_collections : c == "AllExistingAndFutureWorkspaces" ? "/Workspaces" : "/Workspaces/${c}"],
       )
     })
@@ -12,12 +12,15 @@ locals {
 resource "msgraph_resource" "role" {
   url         = "roleManagement/defender/roleDefinitions"
   api_version = "beta"
-  body = {
-    displayName = var.display_name
-    rolePermissions = [
-      { allowedResourceActions = var.permissions }
-    ]
-  }
+  body = merge(
+    {
+      displayName = var.display_name
+      rolePermissions = [
+        { allowedResourceActions = var.permissions }
+      ]
+    },
+    var.description == null ? {} : { description = var.description },
+  )
 }
 
 resource "msgraph_resource" "assignment" {

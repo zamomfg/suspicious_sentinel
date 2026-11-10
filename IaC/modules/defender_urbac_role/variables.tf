@@ -3,6 +3,12 @@ variable "display_name" {
   type        = string
 }
 
+variable "description" {
+  description = "Description of the role."
+  type        = string
+  default     = null
+}
+
 variable "permissions" {
   description = "Allowed resource actions of the role, e.g. \"microsoft.xdr/secops/securitydata/alerts/manage\"."
   type        = list(string)
@@ -17,7 +23,7 @@ variable "assignments" {
   description = <<-EOT
     Role assignments. Each assignment grants the role to principal_ids over:
       data_sources     - Defender workloads: Mde, Mdo, Mda, Mdc, SecureScoreExternal, Sai,
-                         or "AllIncludingFutureDataSources".
+                         or "AllExistingAndFutureDataSources".
       data_collections - Log Analytics workspace ids (the workspace_id / customer id
                          GUID, not the ARM resource id) the assignment can query,
                          or "AllExistingAndFutureWorkspaces".
@@ -37,16 +43,16 @@ variable "assignments" {
 
   validation {
     condition = alltrue([for a in var.assignments : alltrue([
-      for s in a.data_sources : contains(["Mde", "Mdo", "Mda", "Mdc", "SecureScoreExternal", "Sai", "AllIncludingFutureDataSources"], s)
+      for s in a.data_sources : contains(["Mde", "Mdo", "Mda", "Mdc", "SecureScoreExternal", "Sai", "AllExistingAndFutureDataSources"], s)
     ])])
-    error_message = "data_sources values must be Mde, Mdo, Mda, Mdc, SecureScoreExternal, Sai or AllIncludingFutureDataSources."
+    error_message = "data_sources values must be Mde, Mdo, Mda, Mdc, SecureScoreExternal, Sai or AllExistingAndFutureDataSources."
   }
 
   validation {
     condition = alltrue([for a in var.assignments :
-      !contains(a.data_sources, "AllIncludingFutureDataSources") || length(a.data_sources) == 1
+      !contains(a.data_sources, "AllExistingAndFutureDataSources") || length(a.data_sources) == 1
     ])
-    error_message = "AllIncludingFutureDataSources can't be combined with other data_sources."
+    error_message = "AllExistingAndFutureDataSources can't be combined with other data_sources."
   }
 
   validation {
