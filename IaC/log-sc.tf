@@ -19,3 +19,49 @@ resource "azurerm_log_analytics_workspace" "law_sc" {
 resource "azurerm_sentinel_log_analytics_workspace_onboarding" "sentinel_sc" {
   workspace_id = azurerm_log_analytics_workspace.law_sc.id
 }
+
+import {
+  to = azapi_resource.ueba_sc
+  id = "${azurerm_log_analytics_workspace.law_sc.id}/providers/Microsoft.SecurityInsights/settings/Ueba"
+}
+
+resource "azapi_resource" "ueba_sc" {
+  type      = "Microsoft.SecurityInsights/settings@2025-10-01-preview"
+  name      = "Ueba"
+  parent_id = azurerm_log_analytics_workspace.law_sc.id
+  body = {
+    kind = "Ueba"
+    properties = {
+      dataSources = [
+        "AuditLogs",
+        "AzureActivity",
+        "SecurityEvent",
+        "SigninLogs",
+        "AADManagedIdentitySignInLogs",
+        "AADServicePrincipalSignInLogs",
+        "DeviceLogonEvents",
+        "CommonSecurityLog",
+      ]
+    }
+  }
+
+  schema_validation_enabled = false
+  depends_on                = [azurerm_sentinel_log_analytics_workspace_onboarding.sentinel_sc]
+}
+
+import {
+  to = azapi_resource.entity_analytics_sc
+  id = "${azurerm_log_analytics_workspace.law_sc.id}/providers/Microsoft.SecurityInsights/settings/EntityAnalytics"
+}
+
+resource "azapi_resource" "entity_analytics_sc" {
+  type      = "Microsoft.SecurityInsights/settings@2025-10-01-preview"
+  name      = "EntityAnalytics"
+  parent_id = azurerm_log_analytics_workspace.law_sc.id
+  body = {
+    kind       = "EntityAnalytics"
+    properties = { entityProviders = ["AzureActiveDirectory"] }
+  }
+
+  depends_on = [azurerm_sentinel_log_analytics_workspace_onboarding.sentinel_sc]
+}
