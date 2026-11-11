@@ -97,13 +97,3 @@ module "urbac_defender_admin" {
   #   },
   # ]
 }
-
-moved {
-  from = msgraph_resource.urbac_organization_management
-  to   = module.urbac_organization_management.msgraph_resource.role
-}
-
-moved {
-  from = msgraph_resource.urbac_view_only_organization_management
-  to   = module.urbac_view_only_organization_management.msgraph_resource.role
-}
