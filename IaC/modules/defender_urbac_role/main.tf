@@ -29,7 +29,6 @@ resource "msgraph_resource" "assignment" {
   url         = "roleManagement/defender/roleAssignments"
   api_version = "beta"
   body = {
-    "@odata.type"     = "#microsoft.graph.unifiedRoleAssignmentMultiple"
     displayName       = each.key
     roleDefinitionId  = msgraph_resource.role.id
     principalIds      = each.value.principal_ids
