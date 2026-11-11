@@ -1,14 +1,22 @@
-module "urbac_sentinel_contributor" {
-  source = "./modules/defender_urbac_role"
+# module "urbac_sentinel_contributor" {
+#   source = "./modules/defender_urbac_role"
+#
+#   display_name = "URBAC Sentinel Contributor"
+#   description  = "Full access to manage Microsoft Sentinel"
+#   permissions = [
+#     "microsoft.xdr/secops/securitydata/basics/read",
+#     "microsoft.xdr/secops/securitydata/alerts/manage",
+#     "microsoft.xdr/secops/securitydata/response/manage",
+#     "microsoft.xdr/configuration/security/detectiontuning/manage",
+#   ]
+# }
 
-  display_name = "URBAC Sentinel Contributor"
-  description  = "Full access to manage Microsoft Sentinel"
-  permissions = [
-    "microsoft.xdr/secops/securitydata/basics/read",
-    "microsoft.xdr/secops/securitydata/alerts/manage",
-    "microsoft.xdr/secops/securitydata/response/manage",
-    "microsoft.xdr/configuration/security/detectiontuning/manage",
-  ]
+removed {
+  from = module.urbac_sentinel_contributor
+
+  lifecycle {
+    destroy = false
+  }
 }
 
 module "urbac_organization_management" {
@@ -67,14 +75,14 @@ module "urbac_defender_operator" {
     "microsoft.xdr/configuration/system/read",
   ]
 
-  # assignments = [
-  #   {
-  #     display_name     = "Defender Operator - sg-urbac-defender-operator"
-  #     principal_ids    = [msgraph_resource.group_urbac_defender_operator.id]
-  #     data_sources     = ["AllExistingAndFutureDataSources"]
-  #     data_collections = ["AllExistingAndFutureWorkspaces"]
-  #   },
-  # ]
+  assignments = [
+    {
+      display_name  = "Defender Operator - sg-urbac-defender-operator"
+      principal_ids = [msgraph_resource.group_urbac_defender_operator.id]
+      data_sources  = ["AllExistingAndFutureDataSources"]
+      # data_collections = ["AllExistingAndFutureWorkspaces"]
+    },
+  ]
 }
 
 module "urbac_defender_admin" {
@@ -88,12 +96,12 @@ module "urbac_defender_admin" {
     "microsoft.xdr/dataops/*/manage",
   ]
 
-  # assignments = [
-  #   {
-  #     display_name     = "Defender Admin - sg-urbac-defender-admin"
-  #     principal_ids    = [msgraph_resource.group_urbac_defender_admin.id]
-  #     data_sources     = ["AllExistingAndFutureDataSources"]
-  #     data_collections = ["AllExistingAndFutureWorkspaces"]
-  #   },
-  # ]
+  assignments = [
+    {
+      display_name  = "Defender Admin - sg-urbac-defender-admin"
+      principal_ids = [msgraph_resource.group_urbac_defender_admin.id]
+      data_sources  = ["AllExistingAndFutureDataSources"]
+      # data_collections = ["AllExistingAndFutureWorkspaces"]
+    },
+  ]
 }
