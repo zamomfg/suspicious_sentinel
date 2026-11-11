@@ -67,14 +67,14 @@ module "urbac_defender_operator" {
     "microsoft.xdr/configuration/system/read",
   ]
 
-  assignments = [
-    {
-      display_name     = "Defender Operator - sg-urbac-defender-operator"
-      principal_ids    = [msgraph_resource.group_urbac_defender_operator.id]
-      data_sources     = ["AllExistingAndFutureDataSources"]
-      data_collections = ["AllExistingAndFutureWorkspaces"]
-    },
-  ]
+  # assignments = [
+  #   {
+  #     display_name     = "Defender Operator - sg-urbac-defender-operator"
+  #     principal_ids    = [msgraph_resource.group_urbac_defender_operator.id]
+  #     data_sources     = ["AllExistingAndFutureDataSources"]
+  #     data_collections = ["AllExistingAndFutureWorkspaces"]
+  #   },
+  # ]
 }
 
 module "urbac_defender_admin" {
@@ -88,27 +88,12 @@ module "urbac_defender_admin" {
     "microsoft.xdr/dataops/*/manage",
   ]
 
-  assignments = [
-    {
-      display_name     = "Defender Admin - sg-urbac-defender-admin"
-      principal_ids    = [msgraph_resource.group_urbac_defender_admin.id]
-      data_sources     = ["AllExistingAndFutureDataSources"]
-      data_collections = ["AllExistingAndFutureWorkspaces"]
-    },
-  ]
-}
-
-moved {
-  from = msgraph_resource.urbac_sentinel_contributor
-  to   = module.urbac_sentinel_contributor.msgraph_resource.role
-}
-
-moved {
-  from = msgraph_resource.urbac_organization_management
-  to   = module.urbac_organization_management.msgraph_resource.role
-}
-
-moved {
-  from = msgraph_resource.urbac_view_only_organization_management
-  to   = module.urbac_view_only_organization_management.msgraph_resource.role
+  # assignments = [
+  #   {
+  #     display_name     = "Defender Admin - sg-urbac-defender-admin"
+  #     principal_ids    = [msgraph_resource.group_urbac_defender_admin.id]
+  #     data_sources     = ["AllExistingAndFutureDataSources"]
+  #     data_collections = ["AllExistingAndFutureWorkspaces"]
+  #   },
+  # ]
 }
