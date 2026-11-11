@@ -1,22 +1,14 @@
-# module "urbac_sentinel_contributor" {
-#   source = "./modules/defender_urbac_role"
-#
-#   display_name = "URBAC Sentinel Contributor"
-#   description  = "Full access to manage Microsoft Sentinel"
-#   permissions = [
-#     "microsoft.xdr/secops/securitydata/basics/read",
-#     "microsoft.xdr/secops/securitydata/alerts/manage",
-#     "microsoft.xdr/secops/securitydata/response/manage",
-#     "microsoft.xdr/configuration/security/detectiontuning/manage",
-#   ]
-# }
+module "urbac_sentinel_contributor" {
+  source = "./modules/defender_urbac_role"
 
-removed {
-  from = module.urbac_sentinel_contributor
-
-  lifecycle {
-    destroy = false
-  }
+  display_name = "URBAC Sentinel Contributor"
+  description  = "Full access to manage Microsoft Sentinel"
+  permissions = [
+    "microsoft.xdr/secops/securitydata/basics/read",
+    "microsoft.xdr/secops/securitydata/alerts/manage",
+    "microsoft.xdr/secops/securitydata/response/manage",
+    "microsoft.xdr/configuration/security/detectiontuning/manage",
+  ]
 }
 
 module "urbac_organization_management" {
