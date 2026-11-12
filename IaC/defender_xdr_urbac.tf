@@ -75,14 +75,22 @@ module "urbac_defender_operator" {
     "microsoft.xdr/configuration/system/read",
   ]
 
-  assignments = [
-    {
-      display_name  = "Defender Operator - sg-urbac-defender-operator"
-      principal_ids = [msgraph_resource.group_urbac_defender_operator.id]
-      data_sources  = ["AllExistingAndFutureDataSources"]
-      # data_collections = ["AllExistingAndFutureWorkspaces"]
-    },
-  ]
+  # assignments = [
+  #   {
+  #     display_name  = "Defender Operator - sg-urbac-defender-operator"
+  #     principal_ids = [msgraph_resource.group_urbac_defender_operator.id]
+  #     data_sources  = ["AllExistingAndFutureDataSources"]
+  #     # data_collections = ["AllExistingAndFutureWorkspaces"]
+  #   },
+  # ]
+}
+
+removed {
+  from = module.urbac_defender_operator.msgraph_resource.assignment
+
+  lifecycle {
+    destroy = false
+  }
 }
 
 module "urbac_defender_admin" {
@@ -96,12 +104,20 @@ module "urbac_defender_admin" {
     "microsoft.xdr/dataops/*/manage",
   ]
 
-  assignments = [
-    {
-      display_name  = "Defender Admin - sg-urbac-defender-admin"
-      principal_ids = [msgraph_resource.group_urbac_defender_admin.id]
-      data_sources  = ["AllExistingAndFutureDataSources"]
-      # data_collections = ["AllExistingAndFutureWorkspaces"]
-    },
-  ]
+  # assignments = [
+  #   {
+  #     display_name  = "Defender Admin - sg-urbac-defender-admin"
+  #     principal_ids = [msgraph_resource.group_urbac_defender_admin.id]
+  #     data_sources  = ["AllExistingAndFutureDataSources"]
+  #     # data_collections = ["AllExistingAndFutureWorkspaces"]
+  #   },
+  # ]
+}
+
+removed {
+  from = module.urbac_defender_admin.msgraph_resource.assignment
+
+  lifecycle {
+    destroy = false
+  }
 }
