@@ -85,14 +85,6 @@ module "urbac_defender_operator" {
   # ]
 }
 
-removed {
-  from = module.urbac_defender_operator.msgraph_resource.assignment
-
-  lifecycle {
-    destroy = false
-  }
-}
-
 module "urbac_defender_admin" {
   source = "./modules/defender_urbac_role"
 
@@ -112,12 +104,4 @@ module "urbac_defender_admin" {
   #     # data_collections = ["AllExistingAndFutureWorkspaces"]
   #   },
   # ]
-}
-
-removed {
-  from = module.urbac_defender_admin.msgraph_resource.assignment
-
-  lifecycle {
-    destroy = false
-  }
 }
