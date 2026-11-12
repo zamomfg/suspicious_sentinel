@@ -8,16 +8,16 @@
 # "topic,severity " message shape, which also keeps out any other source added
 # to this collector later.
 locals {
-  mikrotik_message = "| extend Message = iif(SyslogMessage contains 'CEF:0|MikroTik|', strcat(extract(@'CEF:\\d+(?:\\|[^|]*){4}\\|([^|]*)\\|', 1, SyslogMessage), ' ', replace(@'\\\\=', '=', extract(@'\\bmsg=(.*?)\\s*$', 1, SyslogMessage))), SyslogMessage)"
+  mikrotik_message = "| extend Message = iif(SyslogMessage contains 'CEF:0|MikroTik|', strcat(extract(@'CEF:\\d+(?:\\|[^|]*){4}\\|([^|]*)\\|', 1, SyslogMessage), ' ', replace(@'\\\\=', '=', extract(@'\\bmsg=(.*?)(?:\\s+[A-Za-z0-9]+=|\\s*$)', 1, SyslogMessage))), SyslogMessage)"
 
   mikrotik_source_where = "| where Message matches regex @'^[a-z][a-z0-9-]*(?:,[a-z][a-z0-9-]*)+ '"
 
-  # Regex matching an RFC1918 / loopback / link-local IPv4 prefix. Used to skip
-  # geo_location() (an external, per-row lookup) for internal addresses that have
-  # no public geolocation anyway.
-  mikrotik_private_ip_regex = "^(?:10\\.|127\\.|169\\.254\\.|192\\.168\\.|172\\.(?:1[6-9]|2[0-9]|3[01])\\.)"
+  # Regex matching an RFC1918 / loopback / link-local IPv4 or link-local / ULA /
+  # multicast / loopback IPv6 prefix. Used to skip geo_location() (an external,
+  # per-row lookup) for internal addresses that have no public geolocation anyway.
+  mikrotik_private_ip_regex = "^(?:10\\.|127\\.|169\\.254\\.|192\\.168\\.|172\\.(?:1[6-9]|2[0-9]|3[01])\\.|fe[89ab][0-9a-f]:|f[cd][0-9a-f]{2}:|ff[0-9a-f]{2}:|::)"
 
-  # RouterOS never logs the action, so home_net prefixes each line with A/D/R/L (accept/drop/reject/log).
+  # ActionLetter strips the legacy A/D/R/L action prefix from home_net log prefixes.
   mikrotik_firewall_asim_kql = <<-KQL
     source
     ${local.mikrotik_message}
@@ -26,6 +26,7 @@ locals {
     | where CefName startswith 'firewall'
     | extend EventMessage = extract(@'^\S+\s+(.*)$', 1, Message)
     | extend TopicSeverity = tostring(split(CefName, ',')[1])
+    | extend CefAction = extract(@'\bact=(\S+)', 1, SyslogMessage)
     | extend RulePrefix = replace(@'^message repeated \d+ times: \[ ', '', extract(@'^(.*?)\s+in:', 1, EventMessage))
     | extend ActionLetter = extract(@'^([ADRL]) ', 1, RulePrefix)
     | extend NetworkRuleName = iif(isnotempty(ActionLetter), substring(RulePrefix, 2), RulePrefix)
@@ -33,12 +34,14 @@ locals {
     | extend DvcOutboundInterface = extract(@'\bout:([^,]*)', 1, EventMessage)
     | extend SrcMacAddr = extract(@'src-mac ([0-9a-fA-F:]{17})', 1, EventMessage)
     | extend NetworkProtocol = extract(@'proto ([A-Za-z0-9]+)', 1, EventMessage)
-    | extend SrcIpAddr = extract(@',\s(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})(?::\d+)?->', 1, EventMessage)
-    | extend SrcPortNumber = extract(@'\s\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}:(\d+)->', 1, EventMessage)
-    | extend DstIpAddr = extract(@'->(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})', 1, EventMessage)
-    | extend DstPortNumber = extract(@'->\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}:(\d+)', 1, EventMessage)
+    | extend SrcEndpoint = extract(@',\s([^\s,]+)->', 1, EventMessage)
+    | extend DstEndpoint = extract(@'->([^\s,]+)', 1, EventMessage)
+    | extend SrcIpAddr = case(SrcEndpoint startswith '[', extract(@'^\[([^\]]+)\]', 1, SrcEndpoint), SrcEndpoint matches regex @'^\d{1,3}(?:\.\d{1,3}){3}(?::\d+)?$', extract(@'^([\d.]+)', 1, SrcEndpoint), extract(@'^([0-9a-fA-F]*:[0-9a-fA-F:.]+)$', 1, SrcEndpoint))
+    | extend SrcPortNumber = extract(@'^(?:\[[^\]]+\]|\d{1,3}(?:\.\d{1,3}){3}):(\d+)$', 1, SrcEndpoint)
+    | extend DstIpAddr = case(DstEndpoint startswith '[', extract(@'^\[([^\]]+)\]', 1, DstEndpoint), DstEndpoint matches regex @'^\d{1,3}(?:\.\d{1,3}){3}(?::\d+)?$', extract(@'^([\d.]+)', 1, DstEndpoint), extract(@'^([0-9a-fA-F]*:[0-9a-fA-F:.]+)$', 1, DstEndpoint))
+    | extend DstPortNumber = extract(@'^(?:\[[^\]]+\]|\d{1,3}(?:\.\d{1,3}){3}):(\d+)$', 1, DstEndpoint)
     | extend NetworkBytes = extract(@'\blen (\d+)', 1, EventMessage)
-    | extend DvcAction = case(ActionLetter == 'A', 'Allow', ActionLetter == 'D', 'Deny', ActionLetter == 'R', 'Reset', ActionLetter == 'L', '', NetworkRuleName has 'drop' or NetworkRuleName has 'block' or NetworkRuleName has 'deny' or NetworkRuleName contains 'no access', 'Deny', NetworkRuleName has 'reject', 'Reset', NetworkRuleName has 'accept' or NetworkRuleName has 'allow' or NetworkRuleName has 'pass', 'Allow', '')
+    | extend DvcAction = case(CefAction == 'accept' or CefAction == 'fasttrack-connection', 'Allow', CefAction == 'drop', 'Drop', CefAction == 'reject' or CefAction == 'tarpit', 'Deny', '')
     | extend SrcGeo = iif(isempty(SrcIpAddr) or isnotempty(extract(@'${local.mikrotik_private_ip_regex}', 0, SrcIpAddr)), parse_json('{}'), geo_location(SrcIpAddr))
     | extend DstGeo = iif(isempty(DstIpAddr) or isnotempty(extract(@'${local.mikrotik_private_ip_regex}', 0, DstIpAddr)), parse_json('{}'), geo_location(DstIpAddr))
     | project
@@ -56,6 +59,7 @@ locals {
         Dvc = HostName,
         DvcHostname = HostName,
         DvcAction,
+        DvcOriginalAction = CefAction,
         DvcInboundInterface,
         DvcOutboundInterface,
         NetworkRuleName,
@@ -78,7 +82,6 @@ locals {
         DstGeoLongitude = toreal(DstGeo.Longitude)
   KQL
 
-  # dhcp,info defconf assigned 192.168.88.37 for B0:E4:5C:27:EF:F2 Samsung
   mikrotik_dhcp_asim_kql = <<-KQL
     source
     ${local.mikrotik_message}
