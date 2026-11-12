@@ -82,30 +82,3 @@ module "tailscale_audit_table" {
     { name = "New", type = "dynamic" },
   ]
 }
-
-module "network_session_outbound_summary_table" {
-  source = "./modules/law_table"
-
-  name             = "NetworkSessionOutboundSummary${local.table_postifx}"
-  law_workspace_id = azurerm_log_analytics_workspace.law_sc.id
-  plan             = "Auxiliary"
-
-  totalRetentionInDays = 180
-
-  columns = [
-    { name = "TimeGenerated", type = "datetime" },
-    { name = "SrcIpAddr", type = "string" },
-    { name = "DstIpAddr", type = "string" },
-    { name = "DstPortNumber", type = "int" },
-    { name = "NetworkProtocol", type = "string" },
-    { name = "IpVersion", type = "string" },
-    { name = "DvcAction", type = "string" },
-    { name = "EventResult", type = "string" },
-    { name = "DvcOutboundInterface", type = "string" },
-    { name = "DstGeoCountry", type = "string" },
-    { name = "SessionCount", type = "long" },
-    { name = "NetworkBytes", type = "long" },
-    { name = "FirstSeen", type = "datetime" },
-    { name = "LastSeen", type = "datetime" },
-  ]
-}
