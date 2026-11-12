@@ -28,6 +28,7 @@ resource "azapi_resource" "custom_table" {
   }
 
   response_export_values = ["properties.schema"]
+  ignore_null_property   = true
 
   schema_validation_enabled = false # this flag is needed since the validation fails when using the log definitions in cloumns
   depends_on                = [var.law_workspace_id]

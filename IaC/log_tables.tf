@@ -90,7 +90,6 @@ module "network_session_outbound_summary_table" {
   law_workspace_id = azurerm_log_analytics_workspace.law_sc.id
   plan             = "Auxiliary"
 
-  retention_in_days    = 30
   totalRetentionInDays = 180
 
   columns = [
